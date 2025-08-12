@@ -1,0 +1,33 @@
+generator client {
+  provider = "prisma-client-js"
+  output   = "../lib/generated/prisma"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+model master {
+  id         Int       @id @default(autoincrement())
+  mspCreate  Int?      @db.TinyInt
+  date       DateTime  @db.Date
+  reseller   String    @db.VarChar(100)
+  hoDate     DateTime  @db.Date
+  package    String?   @db.VarChar(100)
+  actDate    DateTime? @db.Date
+  endDate    DateTime? @db.Date
+  customer   String?   @db.VarChar(100)
+  address    String?   @db.VarChar(100)
+  name       String?   @db.VarChar(100)
+  email      String?   @db.VarChar(100)
+  tel        Int?
+  city       String?   @db.VarChar(100)
+  code       String?   @db.VarChar(100)
+  accMail    String?   @db.VarChar(100)
+  password   String?   @unique(map: "password_2") @db.VarChar(100)
+  created_at DateTime? @default(now()) @db.Timestamp(0)
+  updated_at DateTime? @default(now()) @db.Timestamp(0)
+
+  @@index([password], map: "password")
+}
