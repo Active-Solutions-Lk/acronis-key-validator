@@ -14,6 +14,6 @@ export async function userRegister(formData) {
     }
     return { success: true, message: result.message };
   } catch (error) {
-    return { success: false, error: 'Error registering user' };
+    return { success: false, error: 'Error registering user', details: error.message};
   }
 }

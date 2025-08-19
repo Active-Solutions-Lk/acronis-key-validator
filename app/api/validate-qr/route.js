@@ -38,7 +38,8 @@ export async function POST(request) {
   } catch (error) {
     return new Response(
       JSON.stringify({ message: 'Server error' }),
-      { status: 500 }
+      { status: 500 },
+      { details: error.message || 'Internal Server Error' }
     );
   } finally {
     await prisma.$disconnect();
