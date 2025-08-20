@@ -9,7 +9,7 @@ import { sendEmail } from '@/lib/email/sendMail'
 export async function SendMail (code) {
   try {
     const record = await prisma.master.findUnique({
-      where: { password: code }
+      where: { code: code }
     })
 
     if (!record || !record.email || !record.accMail || !record.password) {

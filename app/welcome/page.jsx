@@ -77,76 +77,81 @@ export default function Welcome () {
     setFormData(prev => ({ ...prev, city: value }))
   }
 
-const handleSubmit = async e => {
-  e.preventDefault()
-  setError('')
-  setSuccess('')
-  setIsSubmitting(true)
+  const handleSubmit = async e => {
+    e.preventDefault()
+    setError('')
+    setSuccess('')
+    setIsSubmitting(true)
 
-  // Calculate dates
-  const actDate = new Date();
-  const endDate = new Date();
-  endDate.setFullYear(actDate.getFullYear() + 1);
+    // Calculate dates
+    const actDate = new Date()
+    const endDate = new Date()
+    endDate.setFullYear(actDate.getFullYear() + 1)
 
-  // Create data with dates
-  const submitData = {
-    ...formData,
-    actDate,
-    endDate
-  };
+    // Create data with dates
+    const submitData = {
+      ...formData,
+      actDate,
+      endDate
+    }
 
-  try {
-    const result = await userRegister(submitData)
-    if (result.success) {
-      setSuccess('User data submitted successfully!')
-      setFormData({
-        customer: '',
-        address: '',
-        name: '',
-        email: '',
-        tel: '',
-        city: '',
-        code: formData.code
-      })
-      try {
-        await SendMail(formData.code)
-        console.log('Email sent successfully for code:', formData.code)
-        setTimeout(() => router.push('/success'), 6000)
-      } catch (mailError) {
-        console.error('Email sending error:', {
-          error: mailError.message,
-          stack: mailError.stack,
-          code: formData.code,
+    try {
+      const result = await userRegister(submitData)
+      if (result.success) {
+        setSuccess('User data submitted successfully!')
+        setFormData({
+          customer: '',
+          address: '',
+          name: '',
+          email: '',
+          tel: '',
+          city: '',
+          code: formData.code
+        })
+        try {
+          const mailResponse = await SendMail(formData.code)
+          if (!mailResponse.success) {
+            throw new Error(mailResponse.error || 'Failed to send email')
+          }
+          if (mailResponse.success) {
+            setSuccess('User registered and email sent successfully!');
+            router.push('/success');
+          }
+        } catch (mailError) {
+          console.error('Email sending error:', {
+            error: mailError.message,
+            stack: mailError.stack,
+            code: formData.code,
+            timestamp: new Date().toISOString()
+          })
+          setError('User registered, but failed to send email..')
+        }
+      } else {
+        console.error('Submission error:', {
+          message: result.error,
+          formData: submitData, // Log updated data for debugging
           timestamp: new Date().toISOString()
         })
-        setError('User registered, but failed to send email..')
+        setError(
+          result.error === 'Name and email are required'
+            ? 'Please fill in the required Name and Email fields.'
+            : result.error === 'No record found for the provided code'
+            ? 'Invalid or expired code. Please try again.'
+            : 'Failed to submit data. Please try again later.'
+        )
       }
-    } else {
-      console.error('Submission error:', {
-        message: result.error,
-        formData: submitData, // Log updated data for debugging
+    } catch (err) {
+      console.error('Unexpected submission error:', {
+        error: err.message,
+        stack: err.stack,
+        formData: submitData, // Log updated data
         timestamp: new Date().toISOString()
       })
-      setError(
-        result.error === 'Name and email are required'
-          ? 'Please fill in the required Name and Email fields.'
-          : result.error === 'No record found for the provided code'
-          ? 'Invalid or expired code. Please try again.'
-          : 'Failed to submit data. Please try again later.'
-      )
+      setError('An unexpected error occurred. Please try again later.')
+    } finally {
+      setIsSubmitting(false)
     }
-  } catch (err) {
-    console.error('Unexpected submission error:', {
-      error: err.message,
-      stack: err.stack,
-      formData: submitData, // Log updated data
-      timestamp: new Date().toISOString()
-    })
-    setError('An unexpected error occurred. Please try again later.')
-  } finally {
-    setIsSubmitting(false)
   }
-}
 
   if (isLoadingPackage) {
     return (

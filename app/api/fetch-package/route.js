@@ -13,7 +13,7 @@ export async function POST(request) {
     }
 
     const record = await prisma.master.findFirst({
-      where: { password: code }, // Check password field against input code
+      where: { code: code }, // Check password field against input code
       select: { package: true },
     });
 

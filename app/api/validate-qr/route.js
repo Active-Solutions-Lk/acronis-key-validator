@@ -14,7 +14,7 @@ export async function POST(request) {
     }
 
     const record = await prisma.master.findFirst({
-      where: { password: code },
+      where: { code: code },
     });
 
     if (!record) {

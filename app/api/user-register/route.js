@@ -19,7 +19,7 @@ export async function POST(request) {
     }
 
     const record = await prisma.master.update({
-      where: { password: code },
+      where: { code: code },
       data: {
         customer: customer || null,
         address: address || null,

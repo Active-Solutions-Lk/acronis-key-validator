@@ -9,7 +9,6 @@ import prisma from '@/lib/prisma';
        if (!name || !email || !tel || !qrKey) {
          return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
        }
-
        // Create user in the database
        const user = await prisma.user.create({
          data: {
