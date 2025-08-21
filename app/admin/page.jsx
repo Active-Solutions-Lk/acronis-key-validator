@@ -1,7 +1,7 @@
 // app/admin/page.jsx
 'use client'
 
-import { useState } from 'react'
+import { useState , useEffect} from 'react'
 import {
   Card,
   CardContent,
@@ -23,28 +23,143 @@ import {
   DialogTitle
 } from '@/components/ui/dialog'
 import ValidateUser from '../actions/validateUser'
+import EditableTable from '@/components/EditableTable'
+import { FetchMaster } from '../actions/fetchMaster'
 
 
-export default function TabsDemo () {
+
+const columns = [
+  {
+    accessorKey: 'id',
+    header: 'ID',
+    cell: ({ row }) => <div className='w-12'>{row.getValue('id')}</div>,
+    enableSorting: true
+  },
+  {
+    accessorKey: 'reseller',
+    header: 'Reseller',
+    cell: ({ row }) => (
+      <div className='min-w-[120px]'>{row.getValue('reseller')}</div>
+    ),
+    enableSorting: true
+  },
+  {
+    accessorKey: 'date',
+    header: 'Date',
+    cell: ({ row }) => (
+      <div className='min-w-[80px]'>
+        {new Date(row.getValue('date')).toLocaleDateString()}
+      </div>
+    ),
+    enableSorting: true
+  },
+  {
+    accessorKey: 'customer',
+    header: 'Customer',
+    cell: ({ row }) => (
+      <div className='min-w-[120px]'>{row.getValue('customer') || '-'}</div>
+    ),
+    enableSorting: true
+  },
+  {
+    accessorKey: 'actDate',
+    header: 'Activated Date',
+    cell: ({ row }) => (
+      <div className='min-w-[80px]'>{row.getValue('actDate') || '-'}</div>
+    )
+  },
+  {
+    accessorKey: 'endDate',
+    header: 'End Date',
+    cell: ({ row }) => (
+      <div className='min-w-80px]'>{row.getValue('endDate') || '-'}</div>
+    )
+  },
+  {
+    accessorKey: 'code',
+    header: 'Code',
+    cell: ({ row }) => (
+      <div className='min-w-[80px]'>{row.getValue('code') || '-'}</div>
+    )
+  },
+  {
+    accessorKey: 'accMail',
+    header: 'Acc Mail',
+    cell: ({ row }) => (
+      <div className='min-w-[120px] font-mono'>
+        {row.getValue('accMail') || '-'}
+      </div>
+    )
+  },
+  {
+    accessorKey: 'password',
+    header: 'Password',
+    cell: ({ row }) => (
+      <div className='min-w-[50px]'>{row.getValue('password') || '-'}</div>
+    )
+  }
+]
+
+export default function Admin () {
   const [showAlert, setShowAlert] = useState(true)
   const [alertName, setAlertName] = useState('')
   const [alertPassword, setAlertPassword] = useState('')
+  const [message, setMessage] = useState('')
+  const [loading, setLoading] = useState(false)
+  const [masterData, setMasterData] = useState([])
 
-  const  handleOkClick =async () => {
-    console.log('Submit Data:', {
-      name: alertName,
-      password: alertPassword
-    })
-    const data = {
-      userName: alertName,
-      password: alertPassword
+
+  useEffect(() => {
+    const fetchData = async () => {
+        try {
+            const response = await FetchMaster()
+            if (response.success) {
+                // console.log('Master data fetched successfully:', response.responseData);
+                setMasterData(response.responseData.data);
+            } else {
+                setMessage(response.error || 'Failed to fetch master data.');
+            }
+        } catch (error) {
+            console.error('Error fetching master data:', error);
+            setMessage('Error fetching master data.');
+        }
+    };
+    fetchData();
+  }, []);
+
+
+  const handleOkClick = async e => {
+    e.preventDefault()
+    if (!alertName || !alertPassword) {
+      setMessage('Username and password are required')
+      return
     }
-    const response = await ValidateUser(data);
-    setShowAlert(true);
+    try {
+      setMessage('')
+      setLoading(true)
+
+      const data = {
+        user_name: alertName,
+        password: alertPassword
+      }
+      const response = await ValidateUser(data)
+      if (response.status === 200) {
+        setMessage('User validated successfully')
+        setLoading(false)
+        setShowAlert(false)
+      } else {
+        setLoading(false)
+        setMessage(response.message || 'Validation failed')
+      }
+    } catch (error) {
+      console.log('Error validating user:', error)
+      setLoading(false)
+      setMessage(error.message || 'Error validating credentials')
+    }
   }
 
   return (
-    <div className='flex-1 w-full gap-6'>
+    <div className='flex-1 p-3  w-full gap-6'>
       <Dialog open={showAlert}>
         <form>
           <DialogContent className='sm:max-w-[425px]'>
@@ -77,53 +192,40 @@ export default function TabsDemo () {
               </div>
             </div>
             <DialogFooter>
+              {message && <p className='text-red-500'>{message}</p>}
               <Button onClick={handleOkClick} type='submit'>
-                Login
+                {loading ? 'Validating...' : 'Login'}
               </Button>
             </DialogFooter>
           </DialogContent>
         </form>
       </Dialog>
       {!showAlert && (
-        <Tabs defaultValue='account'>
+        <Tabs defaultValue='mtable'>
           <TabsList>
-            <TabsTrigger value='account'>Account</TabsTrigger>
-            <TabsTrigger value='password'>Password</TabsTrigger>
+            <TabsTrigger value='mtable'>Master Table</TabsTrigger>
+            <TabsTrigger value='profile'>Profile</TabsTrigger>
           </TabsList>
-          <TabsContent value='account'>
+          <TabsContent value='mtable'>
+            <Card className='bg-gray-200'>
+              <CardContent className='grid gap-4 p-0 m-0'>
+                <EditableTable masterDate={masterData} columns={columns} />
+              </CardContent>
+            </Card>
+          </TabsContent>
+          <TabsContent value='profile'>
             <Card>
               <CardHeader>
-                <CardTitle>Account</CardTitle>
+                <CardTitle>Profile</CardTitle>
                 <CardDescription>
-                  Make changes to your account here. Click save when you&apos;re
-                  done.
+                  Update your profile information and password.
                 </CardDescription>
               </CardHeader>
               <CardContent className='grid gap-6'>
-                <div className='grid gap-3'>
-                  <Label htmlFor='tabs-demo-name'>Name</Label>
-                  <Input id='tabs-demo-name' defaultValue='Pedro Duarte' />
-                </div>
                 <div className='grid gap-3'>
                   <Label htmlFor='tabs-demo-username'>Username</Label>
                   <Input id='tabs-demo-username' defaultValue='@peduarte' />
                 </div>
-              </CardContent>
-              <CardFooter>
-                <Button>Save changes</Button>
-              </CardFooter>
-            </Card>
-          </TabsContent>
-          <TabsContent value='password'>
-            <Card>
-              <CardHeader>
-                <CardTitle>Password</CardTitle>
-                <CardDescription>
-                  Change your password here. After saving, you&apos;ll be logged
-                  out.
-                </CardDescription>
-              </CardHeader>
-              <CardContent className='grid gap-6'>
                 <div className='grid gap-3'>
                   <Label htmlFor='tabs-demo-current'>Current password</Label>
                   <Input id='tabs-demo-current' type='password' />

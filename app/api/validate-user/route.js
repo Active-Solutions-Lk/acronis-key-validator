@@ -1,22 +1,21 @@
 // app/api/validate-user/route.js
-
 'use server';
 
 import prisma from '@/lib/prisma';
 
 export async function POST(request) {
   try {
-    const { userName, password } = await request.json();
+    const { user_name, password } = await request.json();
 
-    if (!userName || !password) {
+    if (!user_name || !password) {
       return new Response(
-        JSON.stringify({ message: ' Required data one or two is empty' }),
+        JSON.stringify({ message: 'Required data one or two is empty' }),
         { status: 400 }
       );
     }
 
-    const record = await prisma.master.findUnique({
-      where: { userName, password },
+    const record = await prisma.admin.findUnique({
+      where: { user_name, password },
     });
 
     if (!record) {
@@ -31,6 +30,7 @@ export async function POST(request) {
       { status: 200 }
     );
   } catch (error) {
+    console.error('Error validating user:', error);
     return new Response(
       JSON.stringify({ message: 'Server error' }),
       { status: 500 },
