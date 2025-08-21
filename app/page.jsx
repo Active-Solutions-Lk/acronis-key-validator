@@ -15,7 +15,6 @@ export default function Home () {
   const [isLoading, setIsLoading] = useState(false)
   const [showContact, setShowContact] = useState(false)
   const codeFromUrl = searchParams.get('code')
-  const [isValidating, setIsValidating] = useState(false)
 
   useEffect(() => {
     if (codeFromUrl) {
