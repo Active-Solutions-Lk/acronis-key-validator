@@ -1,9 +1,9 @@
 // app/actions/validateUser.js
-'use server';
+'use server'
 
-async function ValidateUser(data) {
+async function ValidateUser (data) {
   if (!data?.user_name || !data?.password) {
-    return { message: 'Username and password are required' };
+    return { message: 'Username and password are required' }
   }
 
   try {
@@ -12,19 +12,20 @@ async function ValidateUser(data) {
       {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(data), // Fix: Send data directly
+        body: JSON.stringify(data) // Fix: Send data directly
       }
-    );
+    )
 
-    const result = await response.json();
+    const result = await response.json()
     if (!response.ok) {
-        console.error('Validation failed:', result.message);
-      throw new Error(result.message || 'Validation failed');
+      console.error('Validation failed:', result.message)
+      throw new Error(result.message || 'Validation failed')
     }
-    return result;
+
+    return result
   } catch (error) {
-    return { message: error.message || 'Error validating credentials' };
+    return { message: error.message || 'Error validating credentials' }
   }
 }
 
-export default ValidateUser;
+export default ValidateUser

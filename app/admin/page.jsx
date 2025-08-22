@@ -1,7 +1,7 @@
 // app/admin/page.jsx
 'use client'
 
-import { useState , useEffect} from 'react'
+import { useState, useEffect } from 'react'
 import {
   Card,
   CardContent,
@@ -25,8 +25,6 @@ import {
 import ValidateUser from '../actions/validateUser'
 import EditableTable from '@/components/EditableTable'
 import { FetchMaster } from '../actions/fetchMaster'
-
-
 
 const columns = [
   {
@@ -99,34 +97,47 @@ const columns = [
     )
   }
 ]
-
 export default function Admin () {
   const [showAlert, setShowAlert] = useState(true)
   const [alertName, setAlertName] = useState('')
   const [alertPassword, setAlertPassword] = useState('')
   const [message, setMessage] = useState('')
   const [loading, setLoading] = useState(false)
-  const [masterData, setMasterData] = useState([])
-
+  const [masterData, setMasterData] = useState([''])
+  const [masterResponse, setmasterResponse] = useState([''])
 
   useEffect(() => {
     const fetchData = async () => {
-        try {
-            const response = await FetchMaster()
-            if (response.success) {
-                // console.log('Master data fetched successfully:', response.responseData);
-                setMasterData(response.responseData.data);
-            } else {
-                setMessage(response.error || 'Failed to fetch master data.');
-            }
-        } catch (error) {
-            console.error('Error fetching master data:', error);
-            setMessage('Error fetching master data.');
+      try {
+        const response = await FetchMaster()
+        if (response.success) {
+          setMasterData(response.responseData.data)
+        } else {
+          setMessage(response.error || 'Failed to fetch master data.')
         }
-    };
-    fetchData();
-  }, []);
+      } catch (error) {
+        console.error('Error fetching master data:', error)
+        setMessage('Error fetching master data.')
+      }
+    }
+    fetchData()
+  }, [])
 
+  // Callback to handle updated data
+  const handleUpdateData = async updatedRow => {
+    const response = await updatedMaster()
+    if (response.success) {
+      setmasterResponse(response.message || 'Updated Success');
+    } else {
+      setmasterResponse(response.error || 'Failed to fetch master data.');
+    }
+
+    setMasterData(prevData =>
+      prevData.map(item =>
+        item.id === updatedRow.id ? { ...item, ...updatedRow } : item
+      )
+    )
+  }
 
   const handleOkClick = async e => {
     e.preventDefault()
@@ -137,11 +148,7 @@ export default function Admin () {
     try {
       setMessage('')
       setLoading(true)
-
-      const data = {
-        user_name: alertName,
-        password: alertPassword
-      }
+      const data = { user_name: alertName, password: alertPassword }
       const response = await ValidateUser(data)
       if (response.status === 200) {
         setMessage('User validated successfully')
@@ -159,7 +166,7 @@ export default function Admin () {
   }
 
   return (
-    <div className='flex-1 p-3  w-full gap-6'>
+    <div className='flex-1 p-3 w-full gap-6'>
       <Dialog open={showAlert}>
         <form>
           <DialogContent className='sm:max-w-[425px]'>
@@ -207,9 +214,13 @@ export default function Admin () {
             <TabsTrigger value='profile'>Profile</TabsTrigger>
           </TabsList>
           <TabsContent value='mtable'>
-            <Card className='bg-gray-200'>
+            <Card className='bg-gray-100'>
               <CardContent className='grid gap-4 p-0 m-0'>
-                <EditableTable masterDate={masterData} columns={columns} />
+                <EditableTable
+                  masterDate={masterData}
+                  columns={columns}
+                  onUpdateData={handleUpdateData} // Pass the callback
+                />
               </CardContent>
             </Card>
           </TabsContent>
