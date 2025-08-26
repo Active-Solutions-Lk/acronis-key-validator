@@ -6,9 +6,15 @@ import {
   useReactTable,
   getSortedRowModel,
   getFilteredRowModel,
-  getPaginationRowModel,
+  getPaginationRowModel
 } from '@tanstack/react-table'
-import { Search, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight } from 'lucide-react'
+import {
+  Search,
+  ChevronLeft,
+  ChevronRight,
+  ChevronsLeft,
+  ChevronsRight
+} from 'lucide-react'
 
 // Shadcn Table Components
 const Table = ({ children, ...props }) => (
@@ -30,19 +36,28 @@ const TableBody = ({ children, ...props }) => (
 )
 
 const TableRow = ({ children, className = '', ...props }) => (
-  <tr className={`border-b transition-colors hover:bg-muted/50 data-[state=selected]:bg-muted ${className}`} {...props}>
+  <tr
+    className={`border-b transition-colors hover:bg-muted/50 data-[state=selected]:bg-muted ${className}`}
+    {...props}
+  >
     {children}
   </tr>
 )
 
 const TableHead = ({ children, className = '', ...props }) => (
-  <th className={`h-12 px-4 text-left align-middle font-medium text-muted-foreground [&:has([role=checkbox])]:pr-0 ${className}`} {...props}>
+  <th
+    className={`h-12 px-4 text-left align-middle font-medium text-muted-foreground [&:has([role=checkbox])]:pr-0 ${className}`}
+    {...props}
+  >
     {children}
   </th>
 )
 
 const TableCell = ({ children, className = '', ...props }) => (
-  <td className={`p-4 align-middle [&:has([role=checkbox])]:pr-0 ${className}`} {...props}>
+  <td
+    className={`p-4 align-middle [&:has([role=checkbox])]:pr-0 ${className}`}
+    {...props}
+  >
     {children}
   </td>
 )
@@ -67,7 +82,10 @@ const DialogContent = ({ children, className = '', ...props }) => (
 )
 
 const DialogHeader = ({ children, ...props }) => (
-  <div className='flex flex-col space-y-1.5 text-center sm:text-left mb-4' {...props}>
+  <div
+    className='flex flex-col space-y-1.5 text-center sm:text-left mb-4'
+    {...props}
+  >
     {children}
   </div>
 )
@@ -85,14 +103,22 @@ const DialogDescription = ({ children, ...props }) => (
 )
 
 // Shadcn Form Components
-const Button = ({ children, variant = 'default', size = 'default', className = '', disabled, ...props }) => {
+const Button = ({
+  children,
+  variant = 'default',
+  size = 'default',
+  className = '',
+  disabled,
+  ...props
+}) => {
   const variants = {
     default: 'bg-primary text-primary-foreground hover:bg-primary/90',
-    outline: 'border border-input bg-background hover:bg-accent hover:text-accent-foreground',
+    outline:
+      'border border-input bg-background hover:bg-accent hover:text-accent-foreground'
   }
   const sizes = {
     default: 'h-10 px-4 py-2',
-    sm: 'h-9 rounded-md px-3',
+    sm: 'h-9 rounded-md px-3'
   }
   return (
     <button
@@ -114,12 +140,15 @@ const Input = ({ className = '', type = 'text', ...props }) => (
 )
 
 const Label = ({ children, className = '', ...props }) => (
-  <label className={`text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 ${className}`} {...props}>
+  <label
+    className={`text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 ${className}`}
+    {...props}
+  >
     {children}
   </label>
 )
 
-function EditableTable({ masterDate, columns, onUpdateData }) {
+function EditableTable ({ masterDate, columns, onUpdateData, masterLoading }) {
   const [data, setData] = useState(masterDate)
   const [sorting, setSorting] = useState([])
   const [columnFilters, setColumnFilters] = useState([])
@@ -127,30 +156,33 @@ function EditableTable({ masterDate, columns, onUpdateData }) {
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false)
   const [editingRow, setEditingRow] = useState(null)
 
-  const table = useReactTable({
-    data,
-    columns,
-    onSortingChange: setSorting,
-    onColumnFiltersChange: setColumnFilters,
-    getCoreRowModel: getCoreRowModel(),
-    getSortedRowModel: getSortedRowModel(),
-    getFilteredRowModel: getFilteredRowModel(),
-    getPaginationRowModel: getPaginationRowModel(),
-    onGlobalFilterChange: setGlobalFilter,
-    globalFilterFn: 'includesString',
-    state: {
-      sorting,
-      columnFilters,
-      globalFilter,
+const table = useReactTable({
+  data,
+  columns,
+  onSortingChange: setSorting,
+  getCoreRowModel: getCoreRowModel(),
+  getSortedRowModel: getSortedRowModel(),
+  getFilteredRowModel: getFilteredRowModel(),
+  getPaginationRowModel: getPaginationRowModel(),
+  onGlobalFilterChange: setGlobalFilter,
+  globalFilterFn: 'includesString',
+  state: {
+    sorting,
+    columnFilters,
+    globalFilter
+  },
+  initialState: {
+    pagination: {
+      pageSize: 3
     },
-    initialState: {
-      pagination: {
-        pageSize: 3,
-      },
-    },
-  })
+    sorting: [
+      { id: 'id', asc: true }  // 👈 default sort by "id" descending
+    ]
+  }
+})
 
-  const handleRowDoubleClick = (row) => {
+
+  const handleRowDoubleClick = row => {
     setEditingRow({ ...row })
     setIsEditDialogOpen(true)
   }
@@ -158,8 +190,8 @@ function EditableTable({ masterDate, columns, onUpdateData }) {
   const handleUpdateData = () => {
     if (!editingRow) return
     // Update local state
-    setData((prevData) =>
-      prevData.map((item) =>
+    setData(prevData =>
+      prevData.map(item =>
         item.id === editingRow.id
           ? { ...editingRow, updated_at: new Date().toISOString() }
           : item
@@ -173,9 +205,15 @@ function EditableTable({ masterDate, columns, onUpdateData }) {
 
   const handleInputChange = (field, value) => {
     if (!editingRow) return
-    setEditingRow((prev) => ({
+    const fieldMapping = {
+      pkg: 'package' // Map "pkg" to "package"
+      // Add other mappings if needed
+    }
+    const actualField = fieldMapping[field] || field
+
+    setEditingRow(prev => ({
       ...prev,
-      [field]: value,
+      [actualField]: value
     }))
   }
 
@@ -188,7 +226,7 @@ function EditableTable({ masterDate, columns, onUpdateData }) {
           <Input
             placeholder='Search all columns...'
             value={globalFilter ?? ''}
-            onChange={(event) => setGlobalFilter(String(event.target.value))}
+            onChange={event => setGlobalFilter(String(event.target.value))}
             className='pl-8'
           />
         </div>
@@ -202,31 +240,43 @@ function EditableTable({ masterDate, columns, onUpdateData }) {
       <div className='rounded-md border'>
         <Table>
           <TableHeader>
-            {table.getHeaderGroups().map((headerGroup) => (
+            {table.getHeaderGroups().map(headerGroup => (
               <TableRow key={headerGroup.id}>
-                {headerGroup.headers.map((header) => (
-                  <TableHead key={header.id} className='font-xs'>
-                    {header.isPlaceholder
-                      ? null
-                      : flexRender(
+                {headerGroup.headers.map(header => (
+                  <TableHead
+                    key={header.id}
+                    className='font-xs cursor-pointer select-none'
+                    onClick={header.column.getToggleSortingHandler()}
+                  >
+                    {header.isPlaceholder ? null : (
+                      <div className='flex items-center'>
+                        {flexRender(
                           header.column.columnDef.header,
                           header.getContext()
                         )}
+                        {/* Sorting indicator */}
+                        {{
+                          asc: ' 🔼',
+                          desc: ' 🔽'
+                        }[header.column.getIsSorted()] ?? null}
+                      </div>
+                    )}
                   </TableHead>
                 ))}
               </TableRow>
             ))}
           </TableHeader>
+
           <TableBody>
             {table.getRowModel().rows?.length ? (
-              table.getRowModel().rows.map((row) => (
+              table.getRowModel().rows.map(row => (
                 <TableRow
                   key={row.id}
                   data-state={row.getIsSelected() && 'selected'}
                   onDoubleClick={() => handleRowDoubleClick(row.original)}
                   className='cursor-pointer hover:bg-white'
                 >
-                  {row.getVisibleCells().map((cell) => (
+                  {row.getVisibleCells().map(cell => (
                     <TableCell key={cell.id}>
                       {flexRender(
                         cell.column.columnDef.cell,
@@ -238,7 +288,10 @@ function EditableTable({ masterDate, columns, onUpdateData }) {
               ))
             ) : (
               <TableRow>
-                <TableCell colSpan={columns.length} className='h-24 text-center'>
+                <TableCell
+                  colSpan={columns.length}
+                  className='h-24 text-center'
+                >
                   No results.
                 </TableCell>
               </TableRow>
@@ -300,59 +353,70 @@ function EditableTable({ masterDate, columns, onUpdateData }) {
           </DialogHeader>
           {editingRow && (
             <div className='grid gap-4 py-4'>
+              <span className='text-xs  text-gray-300'>Seller Details</span>
               <div className='grid grid-cols-2 gap-4'>
                 <div className='grid gap-2'>
                   <Label htmlFor='reseller'>Reseller</Label>
                   <Input
                     id='reseller'
                     value={editingRow.reseller || ''}
-                    onChange={(e) => handleInputChange('reseller', e.target.value)}
+                    onChange={e =>
+                      handleInputChange('reseller', e.target.value)
+                    }
                   />
                 </div>
                 <div className='grid gap-2'>
-                  <Label htmlFor='customer'>Customer</Label>
+                  <Label htmlFor='hoDate'>HO Date</Label>
                   <Input
-                    id='customer'
-                    value={editingRow.customer || ''}
-                    onChange={(e) => handleInputChange('customer', e.target.value)}
+                    id='hoDate'
+                    type='date'
+                    value={
+                      editingRow.hoDate ? editingRow.hoDate.split('T')[0] : ''
+                    }
+                    onChange={e => handleInputChange('hoDate', e.target.value)}
                   />
                 </div>
               </div>
+              <span className='text-xs  text-gray-300'>Customer Details</span>
               <div className='grid grid-cols-2 gap-4'>
                 <div className='grid gap-2'>
                   <Label htmlFor='name'>Name</Label>
                   <Input
                     id='name'
                     value={editingRow.name || ''}
-                    onChange={(e) => handleInputChange('name', e.target.value)}
+                    onChange={e => handleInputChange('name', e.target.value)}
                   />
                 </div>
+                <div className='grid gap-2'>
+                  <Label htmlFor='customer'>Company</Label>
+                  <Input
+                    id='customer'
+                    value={editingRow.customer || ''}
+                    onChange={e =>
+                      handleInputChange('customer', e.target.value)
+                    }
+                  />
+                </div>
+              </div>
+              <div className='grid grid-cols-2 gap-4'>
                 <div className='grid gap-2'>
                   <Label htmlFor='email'>Email</Label>
                   <Input
                     id='email'
                     type='email'
                     value={editingRow.email || ''}
-                    onChange={(e) => handleInputChange('email', e.target.value)}
+                    onChange={e => handleInputChange('email', e.target.value)}
                   />
                 </div>
-              </div>
-              <div className='grid grid-cols-2 gap-4'>
                 <div className='grid gap-2'>
                   <Label htmlFor='tel'>Telephone</Label>
                   <Input
                     id='tel'
                     type='number'
                     value={editingRow.tel || ''}
-                    onChange={(e) => handleInputChange('tel', parseInt(e.target.value) || 0)}
-                  />
-                </div>
-                <div className='grid gap-2'>
-                  <Label htmlFor='city'>City</Label>
-                  <Input
-                    id='city'
-                    value={editingRow.city || ''}
-                    onChange={(e) => handleInputChange('city', e.target.value)}
+                    onChange={e =>
+                      handleInputChange('tel', parseInt(e.target.value) || 0)
+                    }
                   />
                 </div>
               </div>
@@ -361,81 +425,113 @@ function EditableTable({ masterDate, columns, onUpdateData }) {
                 <Input
                   id='address'
                   value={editingRow.address || ''}
-                  onChange={(e) => handleInputChange('address', e.target.value)}
+                  onChange={e => handleInputChange('address', e.target.value)}
                 />
               </div>
-              <div className='grid grid-cols-2 gap-4'>
+              <div className='grid grid-cols-2 gap-2'>
                 <div className='grid gap-2'>
-                  <Label htmlFor='package'>Package</Label>
+                  <Label htmlFor='city'>City</Label>
                   <Input
-                    id='package'
-                    value={editingRow.package || ''}
-                    onChange={(e) => handleInputChange('package', e.target.value)}
+                    id='city'
+                    value={editingRow.city || ''}
+                    onChange={e => handleInputChange('city', e.target.value)}
                   />
                 </div>
-                <div className='grid gap-2'>
-                  <Label htmlFor='code'>Code</Label>
-                  <Input
-                    id='code'
-                    value={editingRow.code || ''}
-                    onChange={(e) => handleInputChange('code', e.target.value)}
-                  />
-                </div>
-              </div>
-              <div className='grid grid-cols-3 gap-4'>
                 <div className='grid gap-2'>
                   <Label htmlFor='date'>Date</Label>
                   <Input
                     id='date'
                     type='date'
                     value={editingRow.date ? editingRow.date.split('T')[0] : ''}
-                    onChange={(e) => handleInputChange('date', e.target.value)}
+                    onChange={e => handleInputChange('date', e.target.value)}
+                  />
+                </div>
+              </div>
+              <div className='flex justify-between items-center '>
+                <span className='text-xs  text-gray-300'>Package Details</span>
+              </div>
+              <div className='grid grid-cols-2 gap-4'>
+                <div className='grid gap-2'>
+                  <Label htmlFor='pkg'>Package</Label>
+                  <Input
+                    id='pkg'
+                    value={editingRow.package || ''}
+                    onChange={e => handleInputChange('package', e.target.value)}
                   />
                 </div>
                 <div className='grid gap-2'>
-                  <Label htmlFor='hoDate'>HO Date</Label>
+                  <Label htmlFor='code'>QR Code</Label>
                   <Input
-                    id='hoDate'
-                    type='date'
-                    value={editingRow.hoDate ? editingRow.hoDate.split('T')[0] : ''}
-                    onChange={(e) => handleInputChange('hoDate', e.target.value)}
-                  />
-                </div>
-                <div className='grid gap-2'>
-                  <Label htmlFor='actDate'>Activation Date</Label>
-                  <Input
-                    id='actDate'
-                    type='date'
-                    value={editingRow.actDate ? editingRow.actDate.split('T')[0] : ''}
-                    onChange={(e) => handleInputChange('actDate', e.target.value)}
+                    id='code'
+                    value={editingRow.code || ''}
+                    onChange={e => handleInputChange('code', e.target.value)}
                   />
                 </div>
               </div>
               <div className='grid grid-cols-2 gap-4'>
-                <div className='grid gap-2'>
-                  <Label htmlFor='endDate'>End Date</Label>
-                  <Input
-                    id='endDate'
-                    type='date'
-                    value={editingRow.endDate ? editingRow.endDate.split('T')[0] : ''}
-                    onChange={(e) => handleInputChange('endDate', e.target.value)}
-                  />
-                </div>
                 <div className='grid gap-2'>
                   <Label htmlFor='accMail'>Account Email</Label>
                   <Input
                     id='accMail'
                     type='email'
                     value={editingRow.accMail || ''}
-                    onChange={(e) => handleInputChange('accMail', e.target.value)}
+                    onChange={e => handleInputChange('accMail', e.target.value)}
+                  />
+                </div>
+                <div className='grid gap-2'>
+                  <Label htmlFor='accMail'>Password</Label>
+                  <Input
+                    id='password'
+                    type='text'
+                    value={editingRow.password || ''}
+                    onChange={e =>
+                      handleInputChange('password', e.target.value)
+                    }
+                  />
+                </div>
+              </div>
+              <div className='grid grid-cols-2 gap-2'>
+                <div className='grid gap-2'>
+                  <Label htmlFor='actDate'>Activation Date</Label>
+                  <Input
+                    id='actDate'
+                    type='datetime-local'
+                    value={
+                      editingRow.actDate
+                        ? new Date(editingRow.actDate)
+                            .toISOString()
+                            .slice(0, 16)
+                        : ''
+                    }
+                    onChange={e => handleInputChange('actDate', e.target.value)}
+                  />
+                </div>
+                <div className='grid gap-2'>
+                  <Label htmlFor='endDate'>End Date</Label>
+                  <Input
+                    id='endDate'
+                    type='datetime-local'
+                    value={
+                      editingRow.endDate
+                        ? new Date(editingRow.endDate)
+                            .toISOString()
+                            .slice(0, 16)
+                        : ''
+                    }
+                    onChange={e => handleInputChange('endDate', e.target.value)}
                   />
                 </div>
               </div>
               <div className='flex justify-end space-x-2 pt-4'>
-                <Button variant='outline' onClick={() => setIsEditDialogOpen(false)}>
+                <Button
+                  variant='outline'
+                  onClick={() => setIsEditDialogOpen(false)}
+                >
                   Cancel
                 </Button>
-                <Button onClick={handleUpdateData}>Update Data</Button>
+                <Button onClick={handleUpdateData}>
+                  {masterLoading ? 'Updating...' : ' Update'}
+                </Button>
               </div>
             </div>
           )}

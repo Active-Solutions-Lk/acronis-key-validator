@@ -15,8 +15,8 @@ model master {
   reseller   String    @db.VarChar(100)
   hoDate     DateTime  @db.Date
   package    String?   @db.VarChar(100)
-  actDate    DateTime? @db.Date
-  endDate    DateTime? @db.Date
+  actDate    DateTime? @db.DateTime(0)
+  endDate    DateTime? @db.DateTime(0)
   customer   String?   @db.VarChar(100)
   address    String?   @db.VarChar(100)
   name       String?   @db.VarChar(100)

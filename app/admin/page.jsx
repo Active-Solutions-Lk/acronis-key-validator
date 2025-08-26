@@ -22,9 +22,11 @@ import {
   DialogHeader,
   DialogTitle
 } from '@/components/ui/dialog'
+import { toast } from "sonner"
 import ValidateUser from '../actions/validateUser'
 import EditableTable from '@/components/EditableTable'
 import { FetchMaster } from '../actions/fetchMaster'
+import updatedMaster from '../actions/updateMaster'
 
 const columns = [
   {
@@ -105,6 +107,7 @@ export default function Admin () {
   const [loading, setLoading] = useState(false)
   const [masterData, setMasterData] = useState([''])
   const [masterResponse, setmasterResponse] = useState([''])
+  const [masterLoading,setMasterLoading] = useState('')
 
   useEffect(() => {
     const fetchData = async () => {
@@ -125,11 +128,17 @@ export default function Admin () {
 
   // Callback to handle updated data
   const handleUpdateData = async updatedRow => {
-    const response = await updatedMaster()
+    // console.log('updatedRow', updatedRow);
+    setMasterLoading(true);
+    const response = await updatedMaster(updatedRow)
     if (response.success) {
       setmasterResponse(response.message || 'Updated Success');
+      toast.success(response.message || 'Updated Success') ;
+      setMasterLoading(false);
     } else {
-      setmasterResponse(response.error || 'Failed to fetch master data.');
+      toast.error(response.error || 'The data is not updated. Please contact admin');
+     setMasterLoading(false);
+
     }
 
     setMasterData(prevData =>
@@ -211,6 +220,7 @@ export default function Admin () {
         <Tabs defaultValue='mtable'>
           <TabsList>
             <TabsTrigger value='mtable'>Master Table</TabsTrigger>
+            <TabsTrigger value='expireList'>Expire List</TabsTrigger>
             <TabsTrigger value='profile'>Profile</TabsTrigger>
           </TabsList>
           <TabsContent value='mtable'>
@@ -220,6 +230,19 @@ export default function Admin () {
                   masterDate={masterData}
                   columns={columns}
                   onUpdateData={handleUpdateData} // Pass the callback
+                  masterLoading = {masterLoading}
+                />
+              </CardContent>
+            </Card>
+          </TabsContent>
+            <TabsContent value='expireList'>
+            <Card className='bg-gray-100'>
+              <CardContent className='grid gap-4 p-0 m-0'>
+                <EditableTable
+                  masterDate={masterData}
+                  columns={columns}
+                  onUpdateData={handleUpdateData} // Pass the callback
+                  masterLoading = {masterLoading}
                 />
               </CardContent>
             </Card>

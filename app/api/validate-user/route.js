@@ -34,7 +34,7 @@ export async function POST(request) {
         console.log('userId', record.id)
         await createSession(record.id)
       } catch (error) {
-        console.error('Error creating session:', error)
+        console.log('Error creating session:', error)
         return new Response(
           JSON.stringify({ message: 'Error creating session' }),
           { status: 500 }
@@ -51,7 +51,7 @@ export async function POST(request) {
       { status: 200 }
     )
   } catch (error) {
-    console.error('Error validating user:', error)
+    console.log('Error validating user:', error)
     return new Response(
       JSON.stringify({ message: 'Server error' }),
       { status: 500 }
@@ -62,13 +62,13 @@ export async function POST(request) {
 }
 
 async function createSession(userId) {
-  console.log('createSession is called for ', userId);
+  // console.log('createSession is called for ', userId);
   const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
   const session = jwt.sign(
     { userId, exp: Math.floor(expiresAt.getTime() / 1000) },
     JWT_SECRET
   );
-  console.log('Generated session token:', session); // Add this for debugging
+  // console.log('Generated session token:', session); // Add this for debugging
   const cookieStore = await cookies();
   cookieStore.set('session', session, {
     httpOnly: true,
@@ -77,5 +77,5 @@ async function createSession(userId) {
     sameSite: 'lax',
     path: '/',
   });
-  console.log('Cookie set successfully'); // Add this for debugging
+  // console.log('Cookie set successfully'); // Add this for debugging
 }
