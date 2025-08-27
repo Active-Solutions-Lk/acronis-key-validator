@@ -5,14 +5,7 @@ import { useState, useEffect } from 'react'
 import {
   Card,
   CardContent,
-  CardDescription,
-  CardFooter,
-  CardHeader,
-  CardTitle
 } from '@/components/ui/card'
-import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
-import { Button } from '@/components/ui/button'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { toast } from 'sonner'
 import ValidateUser from '../actions/validateUser'
@@ -21,6 +14,7 @@ import FetchMaster from '../actions/fetchMaster'
 import expireList from '../actions/expireList'
 import updatedMaster from '../actions/updateMaster'
 import LoginDialog from '@/components/admin/LoginDialog'
+import DataFeed from '@/components/admin/DataFeed'
 const columns = [
   {
     accessorKey: 'id',
@@ -217,7 +211,8 @@ export default function Admin () {
           <TabsList>
             <TabsTrigger value='mtable'>Master Table</TabsTrigger>
             <TabsTrigger value='expList'>Expiry List</TabsTrigger>
-            <TabsTrigger value='profile'>Profile</TabsTrigger>
+            <TabsTrigger value='feed'>Data Feed</TabsTrigger>
+            {/* <TabsTrigger value='profile'>Profile</TabsTrigger> */}
           </TabsList>
           <TabsContent value='mtable'>
             <Card className='bg-gray-100'>
@@ -245,7 +240,20 @@ export default function Admin () {
               </CardContent>
             </Card>
           </TabsContent>
-          <TabsContent value='profile'>
+           <TabsContent value='feed'>
+            <Card className='bg-gray-100'>
+              <CardContent className='grid gap-4  p-0 m-0'>
+                <DataFeed
+                  masterDate={expList}
+                  columns={columns}
+                  onUpdateData={handleUpdateData}
+                  masterLoading={masterLoading}
+                  getRowHighlightClass={getRowHighlightClass}
+                />
+              </CardContent>
+            </Card>
+          </TabsContent>
+          {/* <TabsContent value='profile'>
             <Card>
               <CardHeader>
                 <CardTitle>Profile</CardTitle>
@@ -271,7 +279,7 @@ export default function Admin () {
                 <Button>Save password</Button>
               </CardFooter>
             </Card>
-          </TabsContent>
+          </TabsContent> */}
         </Tabs>
       )}
     </div>

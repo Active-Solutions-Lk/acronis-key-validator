@@ -36,7 +36,7 @@ function SyncEmails () {
     setSyncStatus('idle')
     try {
       const response = await syncData()
-    //   console.log('response', response)
+      console.log('response', response)
       if (response.success) {
         console.log(response.data) // Fixed: Use response.data instead of response.responseData.data
         setSyncStatus('success')
@@ -59,7 +59,26 @@ function SyncEmails () {
   // Manual sync button handler
   const handleManualSync = () => {
     performSync()
+    // startCronJob()
   }
+
+
+  // Trigger server-side cron job (for testing)
+  const startCronJob = async () => {
+    try {
+      const response = await fetch('/api/run-sync', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+      });
+      const result = await response.json();
+      setSyncMessage(result.message);
+      setSyncStatus(response.ok ? 'success' : 'error');
+    } catch (error) {
+      setSyncStatus('error');
+      setSyncMessage('Failed to start cron job');
+      console.error('Error starting cron job:', error);
+    }
+  };
 
   // Set up daily sync at 12:00 AM
   useEffect(() => {
