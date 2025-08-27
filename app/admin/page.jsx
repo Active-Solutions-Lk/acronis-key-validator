@@ -14,20 +14,13 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Button } from '@/components/ui/button'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle
-} from '@/components/ui/dialog'
-import { toast } from "sonner"
+import { toast } from 'sonner'
 import ValidateUser from '../actions/validateUser'
-import EditableTable from '@/components/EditableTable'
-import { FetchMaster } from '../actions/fetchMaster'
+import EditableTable from '@/components/admin/EditableTable'
+import FetchMaster from '../actions/fetchMaster'
+import expireList from '../actions/expireList'
 import updatedMaster from '../actions/updateMaster'
-
+import LoginDialog from '@/components/admin/LoginDialog'
 const columns = [
   {
     accessorKey: 'id',
@@ -72,7 +65,7 @@ const columns = [
     accessorKey: 'endDate',
     header: 'End Date',
     cell: ({ row }) => (
-      <div className='min-w-80px]'>{row.getValue('endDate') || '-'}</div>
+      <div className='min-w-[80px]'>{row.getValue('endDate') || '-'}</div>
     )
   },
   {
@@ -99,6 +92,7 @@ const columns = [
     )
   }
 ]
+
 export default function Admin () {
   const [showAlert, setShowAlert] = useState(true)
   const [alertName, setAlertName] = useState('')
@@ -106,11 +100,11 @@ export default function Admin () {
   const [message, setMessage] = useState('')
   const [loading, setLoading] = useState(false)
   const [masterData, setMasterData] = useState([''])
-  const [masterResponse, setmasterResponse] = useState([''])
-  const [masterLoading,setMasterLoading] = useState('')
+  const [expList, setExpList] = useState([''])
+  const [masterLoading, setMasterLoading] = useState('')
 
   useEffect(() => {
-    const fetchData = async () => {
+    const fetchMasterData = async () => {
       try {
         const response = await FetchMaster()
         if (response.success) {
@@ -123,22 +117,37 @@ export default function Admin () {
         setMessage('Error fetching master data.')
       }
     }
-    fetchData()
+    const fetchExpireData = async () => {
+      try {
+        const response = await expireList()
+        if (response.success) {
+          setExpList(response.responseData.data)
+        } else {
+          setMessage(response.error || 'Failed to fetch Expire data.')
+        }
+      } catch (error) {
+        console.error('Error fetching master data:', error)
+        setMessage('Error fetching master data.')
+      }
+    }
+
+    
+    fetchExpireData()
+    fetchMasterData()
   }, [])
 
   // Callback to handle updated data
   const handleUpdateData = async updatedRow => {
-    // console.log('updatedRow', updatedRow);
-    setMasterLoading(true);
+    setMasterLoading(true)
     const response = await updatedMaster(updatedRow)
     if (response.success) {
-      setmasterResponse(response.message || 'Updated Success');
-      toast.success(response.message || 'Updated Success') ;
-      setMasterLoading(false);
+      toast.success(response.message || 'Updated Success')
+      setMasterLoading(false)
     } else {
-      toast.error(response.error || 'The data is not updated. Please contact admin');
-     setMasterLoading(false);
-
+      toast.error(
+        response.error || 'The data is not updated. Please contact admin'
+      )
+      setMasterLoading(false)
     }
 
     setMasterData(prevData =>
@@ -146,6 +155,22 @@ export default function Admin () {
         item.id === updatedRow.id ? { ...item, ...updatedRow } : item
       )
     )
+  }
+
+  // Function to determine row highlight class based on endDate
+  const getRowHighlightClass = row => {
+    if (row && row.endDate) {
+      const endDate = new Date(row.endDate)
+      const today = new Date()
+      const diffInDays = Math.ceil((endDate - today) / (1000 * 60 * 60 * 24))
+
+      if (diffInDays <= 0) {
+        return 'bg-red-300' // Expired: Red background
+      } else if (diffInDays <= 30) {
+        return 'bg-yellow-100' // Near expiration (within 30 days): Yellow background
+      }
+    }
+    return 'bg-transparent' // No highlight
   }
 
   const handleOkClick = async e => {
@@ -162,7 +187,7 @@ export default function Admin () {
       if (response.status === 200) {
         setMessage('User validated successfully')
         setLoading(false)
-        setShowAlert(false)
+        setShowAlert(false) // Only close dialog on successful validation
       } else {
         setLoading(false)
         setMessage(response.message || 'Validation failed')
@@ -176,51 +201,22 @@ export default function Admin () {
 
   return (
     <div className='flex-1 p-3 w-full gap-6'>
-      <Dialog open={showAlert}>
-        <form>
-          <DialogContent className='sm:max-w-[425px]'>
-            <DialogHeader>
-              <DialogTitle>Login Admin</DialogTitle>
-              <DialogDescription>
-                Enter your credentials to access the admin panel.
-              </DialogDescription>
-            </DialogHeader>
-            <div className='grid gap-4'>
-              <div className='grid gap-3'>
-                <Label htmlFor='name-1'>User Name</Label>
-                <Input
-                  id='name-1'
-                  name='name'
-                  type='text'
-                  onChange={e => setAlertName(e.target.value)}
-                  value={alertName}
-                />
-              </div>
-              <div className='grid gap-3'>
-                <Label htmlFor='username-1'>Password</Label>
-                <Input
-                  id='username-1'
-                  value={alertPassword}
-                  name='username'
-                  type='password'
-                  onChange={e => setAlertPassword(e.target.value)}
-                />
-              </div>
-            </div>
-            <DialogFooter>
-              {message && <p className='text-red-500'>{message}</p>}
-              <Button onClick={handleOkClick} type='submit'>
-                {loading ? 'Validating...' : 'Login'}
-              </Button>
-            </DialogFooter>
-          </DialogContent>
-        </form>
-      </Dialog>
+      <LoginDialog
+        showAlert={showAlert}
+        alertName={alertName}
+        setAlertName={setAlertName}
+        alertPassword={alertPassword}
+        setAlertPassword={setAlertPassword}
+        message={message}
+        setMessage={setMessage}
+        loading={loading}
+        handleOkClick={handleOkClick}
+      />
       {!showAlert && (
         <Tabs defaultValue='mtable'>
           <TabsList>
             <TabsTrigger value='mtable'>Master Table</TabsTrigger>
-            <TabsTrigger value='expireList'>Expire List</TabsTrigger>
+            <TabsTrigger value='expList'>Expiry List</TabsTrigger>
             <TabsTrigger value='profile'>Profile</TabsTrigger>
           </TabsList>
           <TabsContent value='mtable'>
@@ -229,20 +225,22 @@ export default function Admin () {
                 <EditableTable
                   masterDate={masterData}
                   columns={columns}
-                  onUpdateData={handleUpdateData} // Pass the callback
-                  masterLoading = {masterLoading}
+                  onUpdateData={handleUpdateData}
+                  masterLoading={masterLoading}
+                  getRowHighlightClass={getRowHighlightClass}
                 />
               </CardContent>
             </Card>
           </TabsContent>
-            <TabsContent value='expireList'>
+          <TabsContent value='expList'>
             <Card className='bg-gray-100'>
               <CardContent className='grid gap-4 p-0 m-0'>
                 <EditableTable
-                  masterDate={masterData}
+                  masterDate={expList}
                   columns={columns}
-                  onUpdateData={handleUpdateData} // Pass the callback
-                  masterLoading = {masterLoading}
+                  onUpdateData={handleUpdateData}
+                  masterLoading={masterLoading}
+                  getRowHighlightClass={getRowHighlightClass}
                 />
               </CardContent>
             </Card>

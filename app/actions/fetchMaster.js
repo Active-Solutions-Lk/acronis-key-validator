@@ -1,6 +1,6 @@
 'use server';
 
-export async function FetchMaster() {
+export default async function FetchMaster() {
   try {
     const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/fetch-master`, {
       method: 'GET',
