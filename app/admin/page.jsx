@@ -1,4 +1,3 @@
-// app/admin/page.jsx
 'use client'
 
 import { useState, useEffect } from 'react'
@@ -15,6 +14,7 @@ import expireList from '../actions/expireList'
 import updatedMaster from '../actions/updateMaster'
 import LoginDialog from '@/components/admin/LoginDialog'
 import DataFeed from '@/components/admin/DataFeed'
+
 const columns = [
   {
     accessorKey: 'id',
@@ -87,15 +87,59 @@ const columns = [
   }
 ]
 
-export default function Admin () {
+export default function Admin() {
   const [showAlert, setShowAlert] = useState(true)
   const [alertName, setAlertName] = useState('')
   const [alertPassword, setAlertPassword] = useState('')
   const [message, setMessage] = useState('')
   const [loading, setLoading] = useState(false)
-  const [masterData, setMasterData] = useState([''])
-  const [expList, setExpList] = useState([''])
-  const [masterLoading, setMasterLoading] = useState('')
+  const [masterData, setMasterData] = useState([])
+  const [expList, setExpList] = useState([])
+  const [masterLoading, setMasterLoading] = useState(false)
+
+  // Handler to receive and process data from DataFeed
+  const handleDataProcessed = async (data) => {
+    console.log('Received data from DataFeed:', data);
+    if (!Array.isArray(data) || data.length === 0) {
+      toast.error('No valid data received from DataFeed');
+      return { success: false, error: 'No valid data received' };
+    }
+
+    setMasterLoading(true);
+    try {
+      const updatedRecords = [];
+      let hasError = false;
+      for (const record of data) {
+        // Ensure pkg is mapped to package for the API
+        const formattedRecord = {
+          ...record,
+          pkg: record.package, // Map package to pkg to match API
+          package: undefined // Remove package to avoid sending it
+        };
+        
+        const response = await updatedMaster(formattedRecord);
+        if (response.success) {
+          updatedRecords.push(response.user); // Collect created/updated record
+          toast.success(response.message || 'Record updated successfully');
+        } else {
+          hasError = true;
+          toast.error(response.error || 'Failed to update record');
+        }
+      }
+
+      // Update masterData state with new records
+      setMasterData(prevData => [...prevData, ...updatedRecords]);
+      
+      // Return success status to DataFeed
+      return { success: !hasError, error: hasError ? 'Some records failed to insert' : null };
+    } catch (error) {
+      console.error('Error processing data:', error);
+      toast.error('Error processing data. Please try again.');
+      return { success: false, error: error.message };
+    } finally {
+      setMasterLoading(false);
+    }
+  };
 
   useEffect(() => {
     const fetchMasterData = async () => {
@@ -120,18 +164,17 @@ export default function Admin () {
           setMessage(response.error || 'Failed to fetch Expire data.')
         }
       } catch (error) {
-        console.error('Error fetching master data:', error)
-        setMessage('Error fetching master data.')
+        console.error('Error fetching expire data:', error)
+        setMessage('Error fetching expire data.')
       }
     }
 
-    
     fetchExpireData()
     fetchMasterData()
   }, [])
 
-  // Callback to handle updated data
-  const handleUpdateData = async updatedRow => {
+  // Callback to handle updated data from EditableTable
+  const handleUpdateData = async (updatedRow) => {
     setMasterLoading(true)
     const response = await updatedMaster(updatedRow)
     if (response.success) {
@@ -212,7 +255,6 @@ export default function Admin () {
             <TabsTrigger value='mtable'>Master Table</TabsTrigger>
             <TabsTrigger value='expList'>Expiry List</TabsTrigger>
             <TabsTrigger value='feed'>Data Feed</TabsTrigger>
-            {/* <TabsTrigger value='profile'>Profile</TabsTrigger> */}
           </TabsList>
           <TabsContent value='mtable'>
             <Card className='bg-gray-100'>
@@ -240,46 +282,20 @@ export default function Admin () {
               </CardContent>
             </Card>
           </TabsContent>
-           <TabsContent value='feed'>
+          <TabsContent value='feed'>
             <Card className='bg-gray-100'>
-              <CardContent className='grid gap-4  p-0 m-0'>
+              <CardContent className='grid gap-4 p-0 m-0'>
                 <DataFeed
                   masterDate={expList}
                   columns={columns}
                   onUpdateData={handleUpdateData}
                   masterLoading={masterLoading}
                   getRowHighlightClass={getRowHighlightClass}
+                  onDataProcessed={handleDataProcessed}
                 />
               </CardContent>
             </Card>
           </TabsContent>
-          {/* <TabsContent value='profile'>
-            <Card>
-              <CardHeader>
-                <CardTitle>Profile</CardTitle>
-                <CardDescription>
-                  Update your profile information and password.
-                </CardDescription>
-              </CardHeader>
-              <CardContent className='grid gap-6'>
-                <div className='grid gap-3'>
-                  <Label htmlFor='tabs-demo-username'>Username</Label>
-                  <Input id='tabs-demo-username' defaultValue='@peduarte' />
-                </div>
-                <div className='grid gap-3'>
-                  <Label htmlFor='tabs-demo-current'>Current password</Label>
-                  <Input id='tabs-demo-current' type='password' />
-                </div>
-                <div className='grid gap-3'>
-                  <Label htmlFor='tabs-demo-new'>New password</Label>
-                  <Input id='tabs-demo-new' type='password' />
-                </div>
-              </CardContent>
-              <CardFooter>
-                <Button>Save password</Button>
-              </CardFooter>
-            </Card>
-          </TabsContent> */}
         </Tabs>
       )}
     </div>

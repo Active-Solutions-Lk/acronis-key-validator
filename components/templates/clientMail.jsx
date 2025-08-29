@@ -1,0 +1,427 @@
+export default function MyComponent() {
+  return (
+    <html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Your Acronis Key Credentials</title>
+    <style dangerouslySetInnerHTML={{__html: `
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&display=swap');
+    
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background-color: #000000;
+      color: #ffffff;
+      line-height: 1.6;
+      padding: 40px 20px;
+    }
+    
+    .email-container {
+      max-width: none;
+      margin: 0 auto;
+      background-color: #0a0a0a;
+      border: 1px solid #1a1a1a;
+      border-radius: 8px;
+      overflow: hidden;
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+    }
+    
+    .header {
+      background-color: #000000; /* Changed to black */
+      color: #ffffff; /* Adjusted text color for contrast */
+      padding: 40px 40px 35px;
+      border-bottom: 1px solid #1a1a1a;
+      text-align: center; /* Center the header content */
+    }
+    
+    .logo-section {
+      display: inline-block; /* Center the logo section */
+      align-items: center;
+      margin-bottom: 20px;
+    }
+    
+    .logo {
+      width: 200px; /* Adjust size as needed */
+      height: auto; /* Maintain aspect ratio */
+      display: block; /* Ensure it behaves as a block for centering */
+      margin: 0 auto; /* Center the image */
+    }
+    
+    .company-info h1 {
+      font-size: 22px;
+      font-weight: 600;
+      color: #ffffff; /* Adjusted for black background */
+      margin-bottom: 4px;
+    }
+    
+    .company-info p {
+      font-size: 14px;
+      color: #d1d5db; /* Adjusted for contrast */
+      font-weight: 400;
+    }
+    
+    .content {
+      padding: 40px;
+      background-color: #0a0a0a;
+    }
+    
+    .greeting {
+      font-size: 16px;
+      color: #f3f4f6;
+      margin-bottom: 24px;
+      font-weight: 400;
+    }
+    
+    .message {
+      font-size: 16px;
+      color: #d1d5db;
+      margin-bottom: 32px;
+      font-weight: 300;
+    }
+    
+    .credentials-section {
+      background-color: #111111;
+      border: 1px solid #1f1f1f;
+      border-radius: 8px;
+      padding: 32px;
+      margin: 32px 0;
+    }
+    
+    .section-title {
+      font-size: 18px;
+      font-weight: 500;
+      color: #ffffff;
+      margin-bottom: 24px;
+      display: flex;
+      align-items: center;
+    }
+    
+    .section-title::before {
+      content: '';
+      width: 4px;
+      height: 18px;
+      background-color: #6366f1;
+      border-radius: 2px;
+      margin-right: 12px;
+    }
+    
+    .credential-row {
+      display: flex;
+      align-items: center;
+      padding: 16px 0;
+      border-bottom: 1px solid #1f1f1f;
+    }
+    
+    .credential-row:last-child {
+      border-bottom: none;
+    }
+    
+    .credential-label {
+      font-size: 14px;
+      color: #9ca3af;
+      font-weight: 500;
+      min-width: 120px;
+    }
+    
+    .credential-value {
+      font-family: 'SF Mono', 'Monaco', 'Inconsolata', 'Roboto Mono', monospace;
+      font-size: 15px;
+      color: #ffffff;
+      font-weight: 500;
+      background-color: #1f1f1f;
+      padding: 8px 12px;
+      border-radius: 6px;
+      border: 1px solid #2d2d2d;
+      flex: 1;
+      margin-left: 16px;
+      position: relative;
+    }
+    
+    .copy-button {
+      position: absolute;
+      right: 8px;
+      top: 50%;
+      transform: translateY(-50%);
+      background-color: #374151;
+      border: 1px solid #4b5563;
+      color: #d1d5db;
+      padding: 4px 8px;
+      border-radius: 4px;
+      font-size: 11px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      font-weight: 500;
+    }
+    
+    .copy-button:hover {
+      background-color: #4b5563;
+      color: #ffffff;
+      border-color: #6b7280;
+    }
+    
+    .copy-button.copied {
+      background-color: #10b981;
+      color: #ffffff;
+      border-color: #10b981;
+    }
+    
+    .credential-text {
+      padding-right: 60px;
+      word-break: break-all;
+    }
+    
+    .security-notice {
+      background-color: #0f1419;
+      border: 1px solid #1e293b;
+      border-left: 4px solid #3b82f6;
+      border-radius: 6px;
+      padding: 20px;
+      margin: 32px 0;
+    }
+    
+    .security-notice-title {
+      font-size: 14px;
+      font-weight: 600;
+      color: #3b82f6;
+      margin-bottom: 8px;
+    }
+    
+    .security-notice-text {
+      font-size: 14px;
+      color: #cbd5e1;
+      font-weight: 400;
+    }
+    
+    .cta-section {
+      text-align: center;
+      margin: 40px 0;
+    }
+    
+    .cta-button {
+      display: inline-block;
+      background-color: #15151d;
+      color: #ffffff;
+      padding: 12px 32px;
+      text-decoration: none;
+      font-size: 15px;
+      font-weight: 500;
+      border-radius: 6px;
+      transition: background-color 0.2s ease;
+    }
+    
+    .footer {
+      background-color: #000000; /* Changed to black */
+      padding: 32px 40px;
+      border-top: 1px solid #1a1a1a;
+      text-align: center; /* Center footer content */
+    }
+    
+    .footer-content {
+      text-align: center;
+    }
+    
+    .contact-details {
+      margin-bottom: 20px;
+    }
+    
+    .contact-title {
+      font-size: 16px;
+      font-weight: 600;
+      color: #ffffff;
+      margin-bottom: 12px;
+    }
+    
+    .contact-info {
+      font-size: 13px;
+      color: #d1d5db;
+      margin: 4px 0;
+      font-weight: 400;
+    }
+    
+    .contact-info a {
+      color: #6366f1;
+      text-decoration: none;
+    }
+    
+    .contact-info a:hover {
+      text-decoration: underline;
+    }
+    
+    .footer-text {
+      font-size: 12px;
+      color: #9ca3af;
+      font-weight: 400;
+    }
+    
+    /* Responsive Design */
+    @media (max-width: 640px) {
+      body {
+        padding: 20px 16px;
+      }
+      
+      .header, .content, .footer {
+        padding: 24px 20px;
+      }
+      
+      .credentials-section {
+        padding: 20px;
+      }
+      
+      .credential-row {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 8px;
+      }
+      
+      .credential-value {
+        margin-left: 0;
+        width: 100%;
+      }
+      
+      .logo {
+        width: 150px; /* Adjust for smaller screens */
+      }
+    }
+    `}} />
+
+    <script dangerouslySetInnerHTML={{__html: `
+    function copyToClipboard(text, button) {
+      // Use the modern Clipboard API if available
+      if (navigator.clipboard && window.isSecureContext) {
+        navigator.clipboard.writeText(text).then(function() {
+          showCopySuccess(button);
+        }).catch(function(err) {
+          // Fallback for older browsers
+          fallbackCopyTextToClipboard(text, button);
+        });
+      } else {
+        // Fallback for older browsers or non-secure contexts
+        fallbackCopyTextToClipboard(text, button);
+      }
+    }
+
+    function fallbackCopyTextToClipboard(text, button) {
+      var textArea = document.createElement("textarea");
+      textArea.value = text;
+      
+      // Avoid scrolling to bottom
+      textArea.style.top = "0";
+      textArea.style.left = "0";
+      textArea.style.position = "fixed";
+      textArea.style.opacity = "0";
+
+      document.body.appendChild(textArea);
+      textArea.focus();
+      textArea.select();
+
+      try {
+        var successful = document.execCommand('copy');
+        if (successful) {
+          showCopySuccess(button);
+        }
+      } catch (err) {
+        console.error('Fallback: Oops, unable to copy', err);
+      }
+
+      document.body.removeChild(textArea);
+    }
+
+    function showCopySuccess(button) {
+      const originalText = button.textContent;
+      button.textContent = 'Copied!';
+      button.classList.add('copied');
+      
+      setTimeout(function() {
+        button.textContent = originalText;
+        button.classList.remove('copied');
+      }, 2000);
+    }
+    `}} />
+  </head>
+  <body>
+    <div className="email-container">
+      <div className="header">
+        <div className="logo-section">
+          <img
+            src="https://active.lk/mailer/images/uploads/active.png"
+            alt="Acronis Logo" className="logo" />
+        </div>
+        <div className="company-info">
+          <h1>Acronis</h1>
+          <p>Secure Access Management</p>
+        </div>
+      </div>
+
+      <div className="content">
+        <div className="greeting">Hello,</div>
+
+        <div className="message">
+          Your Acronis account has been successfully created. Please find your
+          login credentials below and ensure you store them securely.
+        </div>
+
+        <div className="credentials-section">
+          <div className="section-title">Account Credentials</div>
+
+          <div className="credential-row">
+            <span className="credential-label">User Name</span>
+            <div className="credential-value">
+              <span className="credential-text">{{accMail}}</span>
+              <button className="copy-button"
+                onclick="copyToClipboard('{{accMail}}', this)">Copy</button>
+            </div>
+          </div>
+
+          <div className="credential-row">
+            <span className="credential-label">Password</span>
+            <div className="credential-value">
+              <span className="credential-text">{{password}}</span>
+              <button className="copy-button"
+                onclick="copyToClipboard('{{password}}', this)">Copy</button>
+            </div>
+          </div>
+        </div>
+
+        <div className="security-notice">
+          <div className="security-notice-title">Important Security
+            Information</div>
+          <div className="security-notice-text">
+            For your security, please change your password after your first
+            login. Do not share these credentials with anyone.
+          </div>
+        </div>
+
+        <div className="cta-section">
+          <a href="https://cloud.acronis.com/login" className="cta-button">Access
+            Your Account</a>
+        </div>
+      </div>
+
+      <div className="footer">
+        <div className="footer-content">
+          <div className="contact-details">
+            <div className="contact-title">Contact Us</div>
+            <div className="contact-info">📍 32/2-2/1, Nandimithra Place,Colombo 06,
+              Sri Lanka.</div>
+            <div className="contact-info">📞 +94 112 818 691</div>
+            <div className="contact-info">📧 <a
+                href="mailto:vipsupport@activelk.com">vipsupport@activelk.com</a></div>
+            <div className="contact-info">🌐 <a href="https://activelk.com"
+                target="_blank">www.activelk.com</a></div>
+          </div>
+          <div className="footer-text">
+            &copy; 2025 Active Solutions. All rights reserved.
+          </div>
+        </div>
+      </div>
+    </div>
+  </body>
+</html>
+  );
+}
