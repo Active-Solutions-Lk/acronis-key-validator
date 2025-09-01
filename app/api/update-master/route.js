@@ -23,14 +23,31 @@ export async function POST (request) {
       password
     } = await request.json()
 
-    console.log('received data', { id, mspCreate, date, reseller, hoDate, pkg, actDate, endDate, customer, address, name, email, tel, city, code, accMail, password })
+    console.log('received data', {
+      id,
+      mspCreate,
+      date,
+      reseller,
+      hoDate,
+      pkg,
+      actDate,
+      endDate,
+      customer,
+      address,
+      name,
+      email,
+      tel,
+      city,
+      code,
+      accMail,
+      password
+    })
 
     // Validate required fields
     if (!date || !code || !accMail || !password) {
       return NextResponse.json(
         { error: 'Missing required fields' },
-        { status: 400 },
-        
+        { status: 400 }
       )
     }
 
@@ -47,7 +64,7 @@ export async function POST (request) {
         data: {
           mspCreate,
           date: new Date(date).toISOString(),
-          reseller,
+          reseller: reseller ?? null,
           hoDate: hoDate ? new Date(hoDate).toISOString() : null,
           package: pkg,
           actDate: normalizedActDate,
@@ -72,7 +89,7 @@ export async function POST (request) {
         data: {
           mspCreate,
           date: new Date(date).toISOString(),
-          reseller,
+          reseller: reseller ?? null,
           hoDate: hoDate ? new Date(hoDate).toISOString() : null,
           package: pkg,
           actDate: normalizedActDate,
