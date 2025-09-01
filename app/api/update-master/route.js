@@ -1,7 +1,7 @@
 import prisma from '@/lib/prisma'
 import { NextResponse } from 'next/server'
 
-export async function POST (request) {
+export async function POST(request) {
   try {
     const {
       id,
@@ -44,40 +44,51 @@ export async function POST (request) {
     })
 
     // Validate required fields
-    if (!date || !code || !accMail || !password) {
-      return NextResponse.json(
-        { error: 'Missing required fields' },
-        { status: 400 }
-      )
+    if (id === null || id === undefined) {
+      // For creating new records, require date (non-nullable in schema)
+      if (!date) {
+        return NextResponse.json(
+          { error: 'Missing required field: date' },
+          { status: 400 }
+        )
+      }
+    } else {
+      // For updates, only require id
+      if (!id) {
+        return NextResponse.json(
+          { error: 'Missing required field: id' },
+          { status: 400 }
+        )
+      }
     }
 
     // Normalize DateTime fields
     const normalizedActDate = actDate ? new Date(actDate).toISOString() : null
     const normalizedEndDate = endDate ? new Date(endDate).toISOString() : null
 
-    // Update user in the database
+    // Update or create record
     let user
 
     if (id === null || id === undefined) {
       // Create new record
       user = await prisma.master.create({
         data: {
-          mspCreate,
+          mspCreate: mspCreate ?? null,
           date: new Date(date).toISOString(),
           reseller: reseller ?? null,
           hoDate: hoDate ? new Date(hoDate).toISOString() : null,
-          package: pkg,
+          package: pkg ?? null,
           actDate: normalizedActDate,
           endDate: normalizedEndDate,
-          customer,
-          address,
-          name,
-          email,
-          tel,
-          city,
-          code,
-          accMail,
-          password,
+          customer: customer ?? null,
+          address: address ?? null,
+          name: name ?? null,
+          email: email ?? null,
+          tel: tel ?? null,
+          city: city ?? null,
+          code: code ?? null,
+          accMail: accMail ?? null,
+          password: password ?? null,
           created_at: new Date(),
           updated_at: new Date()
         }
@@ -85,24 +96,24 @@ export async function POST (request) {
     } else {
       // Update existing record
       user = await prisma.master.update({
-        where: { id },
+        where: { id: Number(id) },
         data: {
-          mspCreate,
-          date: new Date(date).toISOString(),
+          mspCreate: mspCreate ?? null,
+          date: date ? new Date(date).toISOString() : undefined,
           reseller: reseller ?? null,
           hoDate: hoDate ? new Date(hoDate).toISOString() : null,
-          package: pkg,
+          package: pkg ?? null,
           actDate: normalizedActDate,
           endDate: normalizedEndDate,
-          customer,
-          address,
-          name,
-          email,
-          tel,
-          city,
-          code,
-          accMail,
-          password,
+          customer: customer ?? null,
+          address: address ?? null,
+          name: name ?? null,
+          email: email ?? null,
+          tel: tel ?? null,
+          city: city ?? null,
+          code: code ?? null,
+          accMail: accMail ?? null,
+          password: password ?? null,
           updated_at: new Date()
         }
       })
