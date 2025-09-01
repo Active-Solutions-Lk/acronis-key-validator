@@ -12,8 +12,8 @@ model master {
   id         Int       @id @default(autoincrement())
   mspCreate  Int?      @db.TinyInt
   date       DateTime  @db.Date
-  reseller   String    @db.VarChar(100)
-  hoDate     DateTime  @db.Date
+  reseller   String?    @db.VarChar(100)
+  hoDate     DateTime?  @db.Date
   package    String?   @db.VarChar(100)
   actDate    DateTime? @db.DateTime(0)
   endDate    DateTime? @db.DateTime(0)
