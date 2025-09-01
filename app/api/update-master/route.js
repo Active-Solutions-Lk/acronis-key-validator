@@ -1,6 +1,14 @@
 import prisma from '@/lib/prisma'
 import { NextResponse } from 'next/server'
 
+// Convert Excel serial date to JavaScript Date
+function excelSerialToDate(serial) {
+  if (typeof serial !== 'number') return new Date(serial);
+  const utc_days = Math.floor(serial - 25569); // Excel epoch starts at 1900-01-01
+  const utc_value = utc_days * 86400 * 1000; // Convert to milliseconds
+  return new Date(utc_value);
+}
+
 export async function POST(request) {
   try {
     const {
@@ -63,8 +71,10 @@ export async function POST(request) {
     }
 
     // Normalize DateTime fields
-    const normalizedActDate = actDate ? new Date(actDate).toISOString() : null
-    const normalizedEndDate = endDate ? new Date(endDate).toISOString() : null
+    const normalizedDate = date ? excelSerialToDate(date).toISOString() : undefined;
+    const normalizedHoDate = hoDate ? excelSerialToDate(hoDate).toISOString() : null;
+    const normalizedActDate = actDate ? excelSerialToDate(actDate).toISOString() : null;
+    const normalizedEndDate = endDate ? excelSerialToDate(endDate).toISOString() : null;
 
     // Update or create record
     let user
@@ -74,9 +84,9 @@ export async function POST(request) {
       user = await prisma.master.create({
         data: {
           mspCreate: mspCreate ?? null,
-          date: new Date(date).toISOString(),
+          date: normalizedDate,
           reseller: reseller ?? null,
-          hoDate: hoDate ? new Date(hoDate).toISOString() : null,
+          hoDate: normalizedHoDate,
           package: pkg ?? null,
           actDate: normalizedActDate,
           endDate: normalizedEndDate,
@@ -99,9 +109,9 @@ export async function POST(request) {
         where: { id: Number(id) },
         data: {
           mspCreate: mspCreate ?? null,
-          date: date ? new Date(date).toISOString() : undefined,
+          date: normalizedDate,
           reseller: reseller ?? null,
-          hoDate: hoDate ? new Date(hoDate).toISOString() : null,
+          hoDate: normalizedHoDate,
           package: pkg ?? null,
           actDate: normalizedActDate,
           endDate: normalizedEndDate,
