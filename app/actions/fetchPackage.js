@@ -2,7 +2,10 @@
 
 export async function fetchPackage(code) {
   try {
-    const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/fetch-package`, {
+    // Use a default URL if the environment variable is not set
+    const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000/api';
+    
+    const response = await fetch(`${apiUrl}/fetch-package`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ code }),

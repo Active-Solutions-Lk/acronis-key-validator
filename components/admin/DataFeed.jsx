@@ -4,16 +4,11 @@ import FileList from './FileList';
 import UploadStatus from './UploadStatus';
 import { ExtSpreadsheet } from '../../lib/fileExtractor/spreadsheet';
 
-export default function DataFeed({ onDataProcessed, masterDate, columns, onUpdateData, masterLoading, getRowHighlightClass }) {
+export default function DataFeed({ onDataProcessed, expectedColumns }) {
   const [isDragActive, setIsDragActive] = useState(false);
   const [files, setFiles] = useState([]);
   const [uploadStatus, setUploadStatus] = useState('idle');
 
-  const expectedColumns = [
-    'id', 'mspCreate', 'date', 'reseller', 'hoDate', 'package',
-    'actDate', 'endDate', 'customer', 'address', 'name', 'email',
-    'tel', 'city', 'code', 'accMail', 'password'
-  ];
 
   const processFiles = async (fileList) => {
     const newFiles = [];
@@ -93,10 +88,9 @@ export default function DataFeed({ onDataProcessed, masterDate, columns, onUpdat
   };
 
   return (
-    <div className="min-h-screen bg-white flex flex-col items-center justify-center p-6">
+    <div className="min-h-1/2 bg-white flex flex-col items-center justify-center p-1">
       <div className="w-full max-w-2xl mx-auto">
-        <div className="text-center mb-8">
-          <h1 className="text-4xl font-bold text-black mb-2">Master Data Upload</h1>
+        <div className="text-center mb-2">
           <p className="text-gray-600">Upload your CSV or Excel files to process data</p>
         </div>
         <UploadZone isDragActive={isDragActive} setIsDragActive={setIsDragActive} onFilesSelected={processFiles} />

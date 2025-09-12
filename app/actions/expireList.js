@@ -1,3 +1,6 @@
+// app\actions\expireList.js
+
+
 'use server';
 
 export default async function expireList() {
@@ -7,7 +10,14 @@ export default async function expireList() {
       headers: { 'Content-Type': 'application/json' }
     });
 
+    // Handle the case when there's no data (404 status)
+    if (response.status === 404) {
+      // Return empty data instead of throwing an error
+      return { success: true, responseData: { success: true, data: [] } };
+    }
+
     if (!response.ok) {
+      console.log('response', response)
       throw new Error('API request failed');
     }
 

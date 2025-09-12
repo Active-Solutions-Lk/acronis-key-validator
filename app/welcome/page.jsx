@@ -7,10 +7,11 @@ import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import { Loader2 } from 'lucide-react'
 import { userRegister } from '../actions/userRegister'
-import { fetchPackage } from '../actions/fetchPackage'
-import { SendMail } from '../actions/sendMail' // Import SendMail
-import { Skeleton } from '@/components/ui/skeleton' // Adjust path based on your setup
+import { validateQRCode } from '../actions/validateQRCode'
+import { SendMail } from '../actions/sendMail'
+import { Skeleton } from '@/components/ui/skeleton'
 import { Suspense } from 'react'
+import AllCities from '../actions/allCities' // Import the AllCities action
 
 export default function Welcome () {
   const searchParams = useSearchParams()
@@ -29,44 +30,86 @@ export default function Welcome () {
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [packageName, setPackage] = useState('')
   const [isLoadingPackage, setIsLoadingPackage] = useState(true)
+  const [cities, setCities] = useState([]) // State for dynamic cities
+  const [isLoadingCities, setIsLoadingCities] = useState(true) // Loading state for cities
 
-  // Sample city list
-  const cities = [
-    { value: 'colombo', label: 'Colombo' },
-    { value: 'kandy', label: 'Kandy' },
-    { value: 'galle', label: 'Galle' },
-    { value: 'jaffna', label: 'Jaffna' },
-    { value: 'negombo', label: 'Negombo' }
-  ]
+  // Fetch cities on component mount
+  useEffect(() => {
+    const fetchCities = async () => {
+      try {
+        const result = await AllCities()
+        if (result.success) {
+          // Transform the cities data to match the Combobox format
+          const transformedCities = result.cities.map(city => ({
+            value: city.id.toString(), // Convert id to string for the value
+            label: `${city.city}` // Format as "City, District"
+          }))
+          setCities(transformedCities)
+        } else {
+          console.error('Failed to fetch cities:', result.error)
+          // Fallback to hardcoded cities if API fails
+          setCities([
+            { value: 'colombo', label: 'Colombo' },
+            { value: 'kandy', label: 'Kandy' },
+            { value: 'galle', label: 'Galle' },
+            { value: 'jaffna', label: 'Jaffna' },
+            { value: 'negombo', label: 'Negombo' }
+          ])
+        }
+      } catch (err) {
+        console.error('Error fetching cities:', err)
+        // Fallback to hardcoded cities if API fails
+        setCities([
+          { value: 'colombo', label: 'Colombo' },
+          { value: 'kandy', label: 'Kandy' },
+          { value: 'galle', label: 'Galle' },
+          { value: 'jaffna', label: 'Jaffna' },
+          { value: 'negombo', label: 'Negombo' }
+        ])
+      } finally {
+        setIsLoadingCities(false)
+      }
+    }
 
-  // Capture code from URL and fetch package on mount
+    fetchCities()
+  }, [])
+
+  // Capture code from URL and validate it on mount
   useEffect(() => {
     const code = searchParams.get('code')
     console.log('Code from URL:', code)
     if (code) {
       setFormData(prev => ({ ...prev, code }))
-      const loadPackage = async () => {
+      const validateCode = async () => {
         try {
-          const result = await fetchPackage(code)
-          console.log('Package fetch result:', result)
-          if (result.success) {
-            setPackage(result.packageName || 'acronis key')
+          // Validate the code (which is actually the ID) first
+          const validationResult = await validateQRCode(code)
+          console.log('Validation result:', validationResult)
+          
+          if (validationResult.status === 200) {
+            // If validation is successful, we can get the package name from the validation result
+            setPackage(validationResult.data?.pkg?.name || 'acronis key')
           } else {
-            setError('Session timeout. Please verify code again')
-            setTimeout(() => router.push('/'), 6000)
+            // If validation fails, redirect to home page
+            setError('Invalid or expired code. Please try again.')
+            setTimeout(() => router.push('/'), 3000)
           }
         } catch (err) {
-          setError('Error loading package.')
+          console.error('Error validating code:', err)
+          setError('Error validating code.')
+          // Redirect to home page after a delay
+          setTimeout(() => router.push('/'), 3000)
         } finally {
           setIsLoadingPackage(false)
         }
       }
-      loadPackage()
+      validateCode()
     } else {
-      // setTimeout(() => router.push('/'), 20)
+      // No code in URL, redirect to home page
+      router.push('/')
       setIsLoadingPackage(false)
     }
-  }, [searchParams])
+  }, [searchParams, router])
 
   const handleChange = e => {
     const { name, value } = e.target
@@ -97,6 +140,7 @@ export default function Welcome () {
 
     try {
       const result = await userRegister(submitData)
+      console.log('User register result:', result) // Add logging for debugging
       if (result.success) {
         setSuccess('User data submitted successfully!')
         setFormData({
@@ -114,8 +158,8 @@ export default function Welcome () {
             throw new Error(mailResponse.error || 'Failed to send email')
           }
           if (mailResponse.success) {
-            setSuccess('User registered and email sent successfully!');
-            router.push('/success');
+            setSuccess('User registered and email sent successfully!')
+            router.push('/success')
           }
         } catch (mailError) {
           console.error('Email sending error:', {
@@ -124,27 +168,31 @@ export default function Welcome () {
             code: formData.code,
             timestamp: new Date().toISOString()
           })
-          setError('User registered, but failed to send email..')
+          // Still redirect to success page even if email fails
+          router.push('/success')
         }
       } else {
         console.error('Submission error:', {
           message: result.error,
-          formData: submitData, // Log updated data for debugging
+          status: result.status,
+          formData: submitData,
           timestamp: new Date().toISOString()
         })
         setError(
           result.error === 'Name and email are required'
             ? 'Please fill in the required Name and Email fields.'
-            : result.error === 'No record found for the provided code'
+            : result.error === 'Invalid code provided'
             ? 'Invalid or expired code. Please try again.'
-            : 'Failed to submit data. Please try again later.'
+            : result.error === 'Code is required'
+            ? 'Code is missing. Please try again.'
+            : result.error || 'Failed to submit data. Please try again later.'
         )
       }
     } catch (err) {
       console.error('Unexpected submission error:', {
         error: err.message,
         stack: err.stack,
-        formData: submitData, // Log updated data
+        formData: submitData,
         timestamp: new Date().toISOString()
       })
       setError('An unexpected error occurred. Please try again later.')
@@ -153,7 +201,7 @@ export default function Welcome () {
     }
   }
 
-  if (isLoadingPackage) {
+  if (isLoadingPackage || isLoadingCities) {
     return (
       <div className='flex items-center justify-center bg-transparent'>
         <Loader2 className='h-64 w-64 animate-spin' />

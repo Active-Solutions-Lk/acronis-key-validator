@@ -1,13 +1,13 @@
 'use server';
 
-export async function validateQRCode(code) {
+export async function validateQRCode(id) {
   try {
     const response = await fetch(
       `${process.env.NEXT_PUBLIC_API_URL}/validate-qr`,
       {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ code }),
+        body: JSON.stringify({ id }),
       }
     );
 

@@ -3,24 +3,41 @@
 import prisma from '@/lib/prisma'
 import { sendEmail } from '@/lib/email/sendMail'
 
-
-
-
 export async function SendMail (code) {
   try {
-    const record = await prisma.master.findUnique({
-      where: { code: code }
+    // First find the credential record with the code
+    const credential = await prisma.credentials.findFirst({
+      where: { code: code },
+      include: {
+        user: true // Include user information directly (replaces master)
+      }
     })
 
-    if (!record || !record.email || !record.accMail || !record.password) {
+    if (!credential) {
+      throw new Error('Record not found for the provided code.')
+    }
+
+    // Check if there's a user associated with this credential
+    if (!credential.user) {
+      throw new Error('No user registered for this code.')
+    }
+
+    // Check if we have the required email fields
+    if (!credential.user.email || !credential.email || !credential.password) {
       throw new Error(
-        'Record not found or missing required fields (email, accMail, password).'
+        'Missing required fields (user email, credential email, or password).'
       )
     }
 
     const subject = 'Your Acronis Key Credentials'
 
-    const result = await sendEmail(record.email, subject, record.accMail, record.password)
+    // Send email to the registered user with the credential details
+    const result = await sendEmail(
+      credential.user.email, // Send to the registered user
+      subject, 
+      credential.email, // Acronis account email from credentials
+      credential.password // Acronis account password from credentials
+    )
 
     if (!result.success) {
       throw new Error(result.error)

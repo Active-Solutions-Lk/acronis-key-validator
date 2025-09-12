@@ -8,36 +8,14 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-model master {
-  id         Int       @id @default(autoincrement())
-  mspCreate  Int?      @db.TinyInt
-  date       DateTime  @db.Date
-  reseller   String?    @db.VarChar(100)
-  hoDate     DateTime?  @db.Date
-  package    String?   @db.VarChar(100)
-  actDate    DateTime? @db.DateTime(0)
-  endDate    DateTime? @db.DateTime(0)
-  customer   String?   @db.VarChar(100)
-  address    String?   @db.VarChar(100)
-  name       String?   @db.VarChar(100)
-  email      String?   @db.VarChar(100)
-  tel        Int?
-  city       String?   @db.VarChar(100)
-  code       String?   @unique(map: "code") @db.VarChar(100)
-  accMail    String?   @db.VarChar(100)
-  password   String?   @unique(map: "password_2") @db.VarChar(100)
-  created_at DateTime? @default(now()) @db.Timestamp(0)
-  updated_at DateTime? @default(now()) @db.Timestamp(0)
-
-  @@index([password], map: "password")
-}
-
 model admin {
   id         Int       @id @default(autoincrement())
   user_name  String    @unique(map: "user_name") @db.VarChar(100)
   password   String    @db.VarChar(100)
   email      String    @unique(map: "email") @db.VarChar(50)
   sync       Int       @db.TinyInt
+  department String    @db.VarChar(50)
+  privilege  String    @db.VarChar(50)
   created_at DateTime  @default(now()) @db.Timestamp(0)
   updated_at DateTime  @default(now()) @db.Timestamp(0)
   session    session[]
@@ -53,4 +31,110 @@ model session {
   admin         admin    @relation(fields: [userId], references: [id], onDelete: Cascade, map: "fk_userId_admin_id")
 
   @@index([userId], map: "userId")
+}
+
+model credentials {
+  id         Int       @id @default(autoincrement())
+  pkg_id     Int
+  email      String    @db.VarChar(100)
+  password   String    @db.VarChar(100)
+  quota      Int?
+  code       String?   @db.VarChar(100)
+  user_id    Int?
+  actDate    DateTime? @db.DateTime(0)
+  endDate    DateTime? @db.DateTime(0)
+  created_at DateTime  @default(now()) @db.Timestamp(0)
+  updated_at DateTime  @default(now()) @db.Timestamp(0)
+  user       user?     @relation(fields: [user_id], references: [id], map: "credentials_ibfk_1")
+  pkg        pkg       @relation(fields: [pkg_id], references: [id], onDelete: Cascade, map: "fk_pkg_id_with_pkg_id")
+  sales      sales[]
+
+  @@index([pkg_id], map: "fk_pkg_id_with_pkg_id")
+  @@index([user_id], map: "user_id")
+}
+
+model pkg {
+  id          Int           @id @default(autoincrement())
+  name        String?       @db.VarChar(100)
+  duration    String?       @db.VarChar(100)
+  created_at  DateTime      @default(now()) @db.Timestamp(0)
+  updated_at  DateTime      @default(now()) @db.Timestamp(0)
+  credentials credentials[]
+}
+
+model reseller {
+  customer_id                Int                         @id @default(autoincrement())
+  company_name               String                      @unique(map: "company_name") @db.VarChar(100)
+  address                    String?                     @db.VarChar(250)
+  type                       String                      @db.VarChar(100)
+  credit_limit               String?                     @db.VarChar(100)
+  payment_terms              String?                     @db.VarChar(100)
+  note                       String?                     @db.VarChar(250)
+  vat                        String?                     @db.VarChar(11)
+  city                       Int?
+  created_at                 DateTime                    @default(now()) @db.Timestamp(0)
+  updated_at                 DateTime                    @default(now()) @db.Timestamp(0)
+  sri_lanka_districts_cities sri_lanka_districts_cities? @relation(fields: [city], references: [id], onDelete: Cascade, map: "fk_city_with_sldc_id")
+  sales                      sales[]
+
+  @@index([city], map: "city")
+}
+
+model sales {
+  id             Int         @id @default(autoincrement())
+  reseller_id    Int
+  credentials_id Int
+  created_at     DateTime    @default(now()) @db.Timestamp(0)
+  updated_at     DateTime    @default(now()) @db.Timestamp(0)
+  credentials    credentials @relation(fields: [credentials_id], references: [id], onDelete: Cascade, map: "fk_master_id_with_master_id")
+  reseller       reseller    @relation(fields: [reseller_id], references: [customer_id], onDelete: Cascade, map: "fk_reseller_id_with_reseller_id")
+
+  @@index([credentials_id], map: "fk_master_id_with_master_id")
+  @@index([reseller_id], map: "fk_reseller_id_with_reseller_id")
+}
+
+model user {
+  id                         Int                         @id @default(autoincrement())
+  name                       String                      @db.Text
+  email                      String                      @db.Text
+  company                    String?                     @db.Text
+  tel                        Int
+  address                    String?                     @db.Text
+  city                       Int?
+  created_at                 DateTime                    @default(now()) @db.Timestamp(0)
+  updated_at                 DateTime                    @default(now()) @db.Timestamp(0)
+  credentials                credentials[]
+  sri_lanka_districts_cities sri_lanka_districts_cities? @relation(fields: [city], references: [id], map: "user_ibfk_1")
+
+  @@index([city], map: "city")
+}
+
+model sri_lanka_districts_cities {
+  id       Int        @id @default(autoincrement())
+  district String     @db.VarChar(100)
+  city     String     @db.VarChar(100)
+  reseller reseller[]
+  user     user[]
+
+  @@unique([district, city], map: "unique_district_city")
+}
+
+model settings {
+  id                   Int      @id @default(autoincrement())
+  site_name            String   @default("Acronis Key Validator") @db.VarChar(255)
+  site_description     String   @default("License key validation system for Acronis products") @db.VarChar(500)
+  maintenance_mode     Boolean  @default(false)
+  smtp_host            String?  @db.VarChar(255)
+  smtp_port            String?  @db.VarChar(10)
+  smtp_user            String?  @db.VarChar(255)
+  smtp_password        String?  @db.VarChar(255)
+  from_email           String?  @db.VarChar(255)
+  email_notifications  Boolean  @default(true)
+  sync_notifications   Boolean  @default(true)
+  expiry_notifications Boolean  @default(true)
+  two_factor_auth      Boolean  @default(false)
+  session_timeout      String   @default("30") @db.VarChar(10)
+  password_min_length  String   @default("8") @db.VarChar(10)
+  created_at           DateTime @default(now()) @db.Timestamp(0)
+  updated_at           DateTime @default(now()) @db.Timestamp(0)
 }

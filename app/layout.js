@@ -1,11 +1,41 @@
+'use client'
+
 import Footer from '@/components/ui/footer'
 import '../app/globals.css'
 import Header from '@/components/ui/header'
 import { Suspense } from 'react'
 import { Toaster } from '@/components/ui/sonner'
-// import { Skeleton } from '@/components/ui/skeleton'; // Adjust path based on your setup
+import { usePathname } from 'next/navigation'
 
 export default function RootLayout ({ children }) {
+  const pathname = usePathname()
+  const isDashboard = pathname?.startsWith('/dashboard')
+
+  if (isDashboard) {
+    // Dashboard layout without header and footer
+    return (
+      <html lang='en' suppressHydrationWarning>
+        <body>
+          <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
+            <main className="w-full h-screen">
+              <Suspense
+                fallback={
+                  <div className="flex items-center justify-center h-screen">
+                    <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-gray-900"></div>
+                  </div>
+                }
+              >
+                {children}
+                <Toaster />
+              </Suspense>
+            </main>
+          </div>
+        </body>
+      </html>
+    )
+  }
+
+  // Default layout with header and footer
   return (
     <html lang='en' suppressHydrationWarning>
       <body>

@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react'
+import React, { useState, useMemo, useEffect } from 'react'
 import {
   flexRender,
   getCoreRowModel,
@@ -9,6 +9,7 @@ import {
 } from '@tanstack/react-table'
 
 import { Search } from 'lucide-react'
+import { Skeleton } from '@/components/ui/skeleton'
 import EditDialog from './EditDialog'
 import Pagination from './Pagination'
 
@@ -39,7 +40,7 @@ const TableRow = ({
   ...props
 }) => (
   <tr
-    className={`border-b transition-colors hover:bg-muted/50 data-[state=selected]:bg-muted ${getRowHighlightClass(
+    className={`border-b p-0 m-0 transition-colors hover:bg-muted/50 data-[state=selected]:bg-muted ${getRowHighlightClass(
       row?.original || {}
     )} ${className}`}
     {...props}
@@ -50,7 +51,7 @@ const TableRow = ({
 
 const TableHead = ({ children, className = '', ...props }) => (
   <th
-    className={`h-12 px-4 text-left align-middle font-medium text-muted-foreground [&:has([role=checkbox])]:pr-0 ${className}`}
+    className={`h-12 px-2 text-left align-middle font-medium text-muted-foreground [&:has([role=checkbox])]:pr-0 ${className}`}
     {...props}
   >
     {children}
@@ -59,7 +60,7 @@ const TableHead = ({ children, className = '', ...props }) => (
 
 const TableCell = ({ children, className = '', ...props }) => (
   <td
-    className={`p-4 align-middle [&:has([role=checkbox])]:pr-0 ${className}`}
+    className={`p-2 align-middle [&:has([role=checkbox])]:pr-0 ${className}`}
     {...props}
   >
     {children}
@@ -78,14 +79,23 @@ function EditableTable({
   columns,
   onUpdateData,
   masterLoading,
-  getRowHighlightClass
+  getRowHighlightClass,
+  isLoading = false,
+  packages,
+  resellers,
+  credentials
 }) {
-  const [data, setData] = useState(masterDate)
+  const [data, setData] = useState(masterDate || [])
   const [sorting, setSorting] = useState([])
   const [columnFilters, setColumnFilters] = useState([])
   const [globalFilter, setGlobalFilter] = useState('')
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false)
   const [editingRow, setEditingRow] = useState(null)
+
+  // Update data when masterDate prop changes
+  useEffect(() => {
+    setData(masterDate || [])
+  }, [masterDate])
 
   const table = useReactTable({
     data,
@@ -104,7 +114,7 @@ function EditableTable({
     },
     initialState: {
       pagination: {
-        pageSize: 4
+        pageSize: 10
       },
       sorting: [{ id: 'id', asc: true }]
     }
@@ -141,11 +151,75 @@ function EditableTable({
     }))
   }
 
+  // Loading skeleton component for search bar
+  const SearchSkeleton = () => (
+    <div className="flex items-center justify-between space-x-0 pe-2">
+      <div className="relative justify-between items-between ps-1 flex-1 max-w-sm">
+        <Skeleton className="h-10 w-full" />
+      </div>
+      <div className="pe-4">
+        <Skeleton className="h-4 w-24" />
+      </div>
+    </div>
+  )
+
+  // Loading skeleton component for table
+  const TableSkeleton = () => (
+    <div className="rounded-md border">
+      <Table>
+        <TableHeader>
+          <TableRow>
+            {columns.map((_, index) => (
+              <TableHead key={index} className="font-xs">
+                <Skeleton className="h-4 w-20" />
+              </TableHead>
+            ))}
+          </TableRow>
+        </TableHeader>
+        <TableBody>
+          {Array.from({ length: 6 }).map((_, rowIndex) => (
+            <TableRow key={rowIndex}>
+              {columns.map((_, colIndex) => (
+                <TableCell key={colIndex}>
+                  <Skeleton className="h-4 w-full" />
+                </TableCell>
+              ))}
+            </TableRow>
+          ))}
+        </TableBody>
+      </Table>
+    </div>
+  )
+
+  // Loading skeleton component for pagination
+  const PaginationSkeleton = () => (
+    <div className="flex items-center justify-between px-2">
+      <Skeleton className="h-4 w-40" />
+      <div className="flex items-center space-x-2">
+        <Skeleton className="h-8 w-8" />
+        <Skeleton className="h-8 w-8" />
+        <Skeleton className="h-8 w-8" />
+        <Skeleton className="h-8 w-8" />
+      </div>
+    </div>
+  )
+
+  // Show loading skeleton when data is being fetched
+  if (isLoading || (!masterDate && masterLoading)) {
+    return (
+      <div className="w-full space-y-1">
+        <SearchSkeleton />
+        <TableSkeleton />
+        <PaginationSkeleton />
+      </div>
+    )
+  }
+
   return (
-    <div className="w-full space-y-1">
+    <div className="w-full">
       {/* Search Bar */}
-      <div className="flex items-center justify-between space-x-2 pe-2">
-        <div className="relative justify-between items-between ps-3 flex-1 max-w-sm">
+      <div className="flex items-center justify-between space-x-0 pe-2">
+        <div className="relative justify-between items-between ps-1 flex-1 max-w-sm">
           <Search className="absolute ms-2 mt-3 h-4 w-4 text-muted-foreground" />
           <Input
             placeholder="Search all columns..."
@@ -154,6 +228,7 @@ function EditableTable({
             className="pl-8"
           />
         </div>
+        
         <div className="text-sm text-muted-foreground pe-4">
           {table.getFilteredRowModel().rows.length} of{' '}
           {table.getCoreRowModel().rows.length} row(s)
@@ -215,9 +290,16 @@ function EditableTable({
               <TableRow>
                 <TableCell
                   colSpan={columns.length}
-                  className="h-24 text-center"
+                  className="h-24 text-center text-muted-foreground"
                 >
-                  No results.
+                  {masterLoading ? (
+                    <div className="flex items-center justify-center space-x-2">
+                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-primary"></div>
+                      <span>Loading data...</span>
+                    </div>
+                  ) : (
+                    'No results found.'
+                  )}
                 </TableCell>
               </TableRow>
             )}
@@ -226,7 +308,9 @@ function EditableTable({
       </div>
 
       {/* Pagination */}
-      <Pagination table={table} />
+      {!isLoading && !masterLoading && (
+        <Pagination table={table} />
+      )}
       
       {/* Edit Dialog */}
       <EditDialog
@@ -236,6 +320,9 @@ function EditableTable({
         handleInputChange={handleInputChange}
         handleUpdateData={handleUpdateData}
         masterLoading={masterLoading}
+        packages={packages}
+        resellers={resellers}
+        credentials={credentials}
       />
     </div>
   )
