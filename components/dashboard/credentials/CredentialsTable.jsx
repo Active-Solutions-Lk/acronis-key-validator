@@ -24,6 +24,7 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 import { Button } from "@/components/ui/button"
+import { usePermissions } from '@/hooks/usePermissions'
 
 export default function CredentialsTable({
   data,
@@ -42,6 +43,12 @@ export default function CredentialsTable({
   error,
   getRowHighlightClass // Add this prop for row highlighting
 }) {
+  // Get permissions
+  const { canEdit, canDelete, canView } = usePermissions()
+  
+  // Check if user can view credentials
+  const canAccessCredentials = canView('credentials')
+
   const table = useReactTable({
     data,
     columns,
@@ -67,6 +74,16 @@ export default function CredentialsTable({
       },
     },
   })
+
+  // If user can't view credentials, show access denied message
+  if (!canAccessCredentials) {
+    return (
+      <div className="rounded-md border p-8 text-center">
+        <h3 className="text-lg font-medium">Access Denied</h3>
+        <p className="text-gray-500">You don't have permission to view credentials.</p>
+      </div>
+    )
+  }
 
   return (
     <>

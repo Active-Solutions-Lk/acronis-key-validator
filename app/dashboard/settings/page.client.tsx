@@ -1,59 +1,113 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { Textarea } from "@/components/ui/textarea"
-import { Switch } from "@/components/ui/switch"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { IconSettings, IconUser, IconMail, IconBell, IconShield, IconDatabase } from '@tabler/icons-react'
-import { toast } from "sonner"
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle
+} from '@/components/ui/card'
+import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
+import { Textarea } from '@/components/ui/textarea'
+import { Switch } from '@/components/ui/switch'
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import {
+  IconSettings,
+  IconUser,
+  IconMail,
+  IconBell,
+  IconShield,
+  IconDatabase
+} from '@tabler/icons-react'
+import { toast } from 'sonner'
 import { fetchSettings } from '@/app/actions/fetchSettings'
 import { updateSettings } from '@/app/actions/updateSettings'
+import { EditAdminDialog } from '@/components/admin/EditAdminDialog'
+import AllAdmins from '@/app/actions/allAdmins'
+import { deleteAdmin } from '@/app/actions/deleteAdmin'
+import { usePermissions } from '@/hooks/usePermissions'
+import LogsTable from '@/components/admin/LogsTable'
 
-export function SettingsClient() {
+// Define the Admin type
+type Admin = {
+  id: number
+  user_name: string
+  email: string
+  department: string
+  privilege: string
+  sync: number
+  created_at: Date
+  updated_at: Date
+}
+
+export function SettingsPageClient () {
   const [activeTab, setActiveTab] = useState('general')
   const [loading, setLoading] = useState(true)
-  
+
+  // Permission hooks
+  const { user, canView, canEdit, canDelete, isSuperAdmin } = usePermissions()
+
   // General settings state
   const [siteName, setSiteName] = useState('Acronis Key Validator')
-  const [siteDescription, setSiteDescription] = useState('License key validation system for Acronis products')
+  const [siteDescription, setSiteDescription] = useState(
+    'License key validation system for Acronis products'
+  )
   const [maintenanceMode, setMaintenanceMode] = useState(false)
-  
+
   // Email settings state
   const [smtpHost, setSmtpHost] = useState('smtp.example.com')
   const [smtpPort, setSmtpPort] = useState('587')
   const [smtpUser, setSmtpUser] = useState('')
   const [smtpPassword, setSmtpPassword] = useState('')
   const [fromEmail, setFromEmail] = useState('noreply@acronis.com')
-  
+
   // Notification settings state
   const [emailNotifications, setEmailNotifications] = useState(true)
   const [syncNotifications, setSyncNotifications] = useState(true)
   const [expiryNotifications, setExpiryNotifications] = useState(true)
-  
+
   // Security settings state
   const [twoFactorAuth, setTwoFactorAuth] = useState(false)
   const [sessionTimeout, setSessionTimeout] = useState('30')
   const [passwordMinLength, setPasswordMinLength] = useState('8')
-  
+
   // Admin management state
-  const [admins, setAdmins] = useState([
-    { id: 1, name: 'Admin User', email: 'admin@example.com', role: 'Super Admin', lastLogin: '2023-05-15' }
-  ])
+  const [admins, setAdmins] = useState<Admin[]>([])
+  const [editingAdmin, setEditingAdmin] = useState<Admin | null>(null)
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false)
+  const [adminsLoading, setAdminsLoading] = useState(false)
+
+  // Check if user can access settings
+  const canViewSettings = canView('settings')
+  const canEditSettings = canEdit('settings')
+
+  // Debugging: Log user and permission information
+  useEffect(() => {
+   // console.log('SettingsClient - User:', user)
+  //  console.log('SettingsClient - Can view settings:', canViewSettings)
+  //  console.log('SettingsClient - Can edit settings:', canEditSettings)
+  }, [user, canViewSettings, canEditSettings])
 
   // Load settings on component mount
   useEffect(() => {
+    // If user can't view settings, don't load data
+    if (!canViewSettings) {
+      setLoading(false)
+      return
+    }
+
     loadSettings()
-  }, [])
+    loadAdmins()
+  }, [canViewSettings])
 
   const loadSettings = async () => {
     try {
       setLoading(true)
       const result = await fetchSettings()
-      
+
       if (result.success && result.data) {
         const settings = result.data
         setSiteName(settings.site_name)
@@ -79,16 +133,40 @@ export function SettingsClient() {
     }
   }
 
+  const loadAdmins = async () => {
+    try {
+      setAdminsLoading(true)
+      const result = await AllAdmins()
+
+      if (result.success) {
+        setAdmins(result.admins || [])
+      } else {
+        toast.error(result.error || 'Failed to load admins')
+      }
+    } catch (error) {
+      console.error('Error loading admins:', error)
+      toast.error('Failed to load admins')
+    } finally {
+      setAdminsLoading(false)
+    }
+  }
+
   const handleSaveGeneral = async () => {
+    // Check if user has permission to edit settings
+    if (!canEditSettings) {
+      toast.error('You do not have permission to edit settings')
+      return
+    }
+
     try {
       const settingsData = {
         siteName,
         siteDescription,
         maintenanceMode
       }
-      
+
       const result = await updateSettings(settingsData)
-      
+
       if (result.success) {
         toast.success('General settings saved successfully')
       } else {
@@ -101,6 +179,12 @@ export function SettingsClient() {
   }
 
   const handleSaveEmail = async () => {
+    // Check if user has permission to edit settings
+    if (!canEditSettings) {
+      toast.error('You do not have permission to edit settings')
+      return
+    }
+
     try {
       const settingsData = {
         smtpHost,
@@ -109,9 +193,9 @@ export function SettingsClient() {
         smtpPassword,
         fromEmail
       }
-      
+
       const result = await updateSettings(settingsData)
-      
+
       if (result.success) {
         toast.success('Email settings saved successfully')
       } else {
@@ -124,15 +208,21 @@ export function SettingsClient() {
   }
 
   const handleSaveNotifications = async () => {
+    // Check if user has permission to edit settings
+    if (!canEditSettings) {
+      toast.error('You do not have permission to edit settings')
+      return
+    }
+
     try {
       const settingsData = {
         emailNotifications,
         syncNotifications,
         expiryNotifications
       }
-      
+
       const result = await updateSettings(settingsData)
-      
+
       if (result.success) {
         toast.success('Notification settings saved successfully')
       } else {
@@ -145,15 +235,21 @@ export function SettingsClient() {
   }
 
   const handleSaveSecurity = async () => {
+    // Check if user has permission to edit settings
+    if (!canEditSettings) {
+      toast.error('You do not have permission to edit settings')
+      return
+    }
+
     try {
       const settingsData = {
         twoFactorAuth,
         sessionTimeout,
         passwordMinLength
       }
-      
+
       const result = await updateSettings(settingsData)
-      
+
       if (result.success) {
         toast.success('Security settings saved successfully')
       } else {
@@ -166,6 +262,12 @@ export function SettingsClient() {
   }
 
   const handleSaveAdmin = async () => {
+    // Check if user has permission to edit settings
+    if (!canEditSettings) {
+      toast.error('You do not have permission to edit settings')
+      return
+    }
+
     try {
       // This would be implemented with actual admin management logic
       toast.success('Admin settings saved successfully')
@@ -175,325 +277,263 @@ export function SettingsClient() {
     }
   }
 
+  const handleAddAdmin = () => {
+    // Check if user has permission to edit settings
+    if (!canEditSettings) {
+      toast.error('You do not have permission to add admins')
+      return
+    }
+
+    setEditingAdmin(null)
+    setIsEditDialogOpen(true)
+  }
+
+  const handleEditAdmin = (admin: Admin) => {
+    // Check if user has permission to edit settings
+    if (!canEditSettings) {
+      toast.error('You do not have permission to edit admins')
+      return
+    }
+
+    setEditingAdmin(admin)
+    setIsEditDialogOpen(true)
+  }
+
+  const handleDeleteAdmin = async (adminId: number) => {
+    // Check if user has permission to edit settings
+    if (!canEditSettings) {
+      toast.error('You do not have permission to delete admins')
+      return
+    }
+
+    if (!confirm('Are you sure you want to delete this admin?')) {
+      return
+    }
+
+    try {
+      const result = await deleteAdmin(adminId)
+
+      if (result.success) {
+        toast.success('Admin deleted successfully')
+        // Reload the admins list
+        loadAdmins()
+      } else {
+        toast.error(result.error || 'Failed to delete admin')
+      }
+    } catch (error) {
+      console.error('Error deleting admin:', error)
+      toast.error('Failed to delete admin')
+    }
+  }
+
+  const handleSaveAdminDialog = async (adminData: Admin) => {
+    // Check if user has permission to edit settings
+    if (!canEditSettings) {
+      toast.error('You do not have permission to save admins')
+      return
+    }
+
+    try {
+      // Reload the admins list
+      loadAdmins()
+    } catch (error) {
+      console.error('Error saving admin:', error)
+      toast.error('Failed to save admin')
+    }
+  }
+
+  // If user can't view settings, show access denied message
+  if (!canViewSettings) {
+    return (
+      <div className='flex items-center justify-center h-full'>
+        <div className='text-center'>
+          <h2 className='text-2xl font-bold mb-2'>Access Denied</h2>
+          <p>You don&apos;t have permission to view this page.</p>
+          {/* Debug information */}
+          <div className='mt-4 p-4 bg-gray-100 rounded'>
+            <p className='text-sm text-gray-600'>Debug Info:</p>
+            <p className='text-sm text-gray-600'>
+              User:{' '}
+              {user
+                ? `${user.user_name} (${user.privilege} in ${user.department})`
+                : 'No user data'}
+            </p>
+            <p className='text-sm text-gray-600'>
+              Can view settings: {canViewSettings ? 'Yes' : 'No'}
+            </p>
+          </div>
+        </div>
+      </div>
+    )
+  }
+
   if (loading) {
     return (
-      <div className="flex items-center justify-center h-full">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900"></div>
+      <div className='flex items-center justify-center h-full'>
+        <div className='animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900'></div>
       </div>
     )
   }
 
   return (
-    <div className="flex flex-col gap-6 py-4">
-      <div className="flex items-center justify-between">
+    <div className='space-y-6'>
+      <div className='flex items-center justify-between'>
         <div>
-          <h1 className="text-3xl font-bold">Settings</h1>
-          <p className="text-muted-foreground">Manage system configuration and preferences</p>
+          <h1 className='text-3xl ps-2 font-bold'>Settings</h1>
+          {/* <p className='text-muted-foreground'>
+            Manage system configuration and preferences
+          </p> */}
         </div>
       </div>
 
-      <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-        <TabsList className="grid w-full grid-cols-5">
-          <TabsTrigger value="general" className="flex items-center gap-2">
-            <IconSettings className="h-4 w-4" />
-            General
-          </TabsTrigger>
-          <TabsTrigger value="email" className="flex items-center gap-2">
-            <IconMail className="h-4 w-4" />
-            Email
-          </TabsTrigger>
-          <TabsTrigger value="notifications" className="flex items-center gap-2">
-            <IconBell className="h-4 w-4" />
-            Notifications
-          </TabsTrigger>
-          <TabsTrigger value="security" className="flex items-center gap-2">
-            <IconShield className="h-4 w-4" />
-            Security
-          </TabsTrigger>
-          <TabsTrigger value="admin" className="flex items-center gap-2">
-            <IconUser className="h-4 w-4" />
-            Admin
-          </TabsTrigger>
+      <Tabs defaultValue='admins' className='space-y-2 ps-2'>
+        <TabsList>
+          <TabsTrigger value='admins'>Admin Management</TabsTrigger>
+          <TabsTrigger value='logs'>System Logs</TabsTrigger>
+          {/* <TabsTrigger value="settings">Settings</TabsTrigger> */}
         </TabsList>
 
-        <TabsContent value="general" className="space-y-6">
-          <Card>
+        <TabsContent value='admins' className='space-y-2'>
+          <Card className='p-1 pb-4 m-0 border-0 shadow-0 ' >
             <CardHeader>
-              <CardTitle>General Settings</CardTitle>
-              <CardDescription>Configure basic system settings</CardDescription>
+              <div className='flex items-center justify-between'>
+                <div>
+                  <CardTitle>Admin Management</CardTitle>
+                  <CardDescription>
+                    Manage administrator accounts and permissions
+                  </CardDescription>
+                </div>
+                <div className='pt-4'>
+                  <Button onClick={handleAddAdmin} disabled={!canEditSettings}>
+                    {canEditSettings
+                      ? 'Add New Admin'
+                      : 'No Permission to Add Admin'}
+                  </Button>
+                </div>
+              </div>
             </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="siteName">Site Name</Label>
-                <Input 
-                  id="siteName" 
-                  value={siteName} 
-                  onChange={(e) => setSiteName(e.target.value)} 
-                />
-              </div>
-              
-              <div className="space-y-2">
-                <Label htmlFor="siteDescription">Site Description</Label>
-                <Textarea 
-                  id="siteDescription" 
-                  value={siteDescription} 
-                  onChange={(e) => setSiteDescription(e.target.value)} 
-                />
-              </div>
-              
-              <div className="flex items-center justify-between">
-                <div className="space-y-1">
-                  <Label>Maintenance Mode</Label>
-                  <p className="text-sm text-muted-foreground">
-                    Enable maintenance mode to temporarily disable access to the system
-                  </p>
-                </div>
-                <Switch 
-                  checked={maintenanceMode} 
-                  onCheckedChange={setMaintenanceMode} 
-                />
-              </div>
-              
-              <div className="pt-4">
-                <Button onClick={handleSaveGeneral}>Save General Settings</Button>
-              </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        <TabsContent value="email" className="space-y-6">
-          <Card>
-            <CardHeader>
-              <CardTitle>Email Configuration</CardTitle>
-              <CardDescription>Set up email delivery for notifications</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="smtpHost">SMTP Host</Label>
-                  <Input 
-                    id="smtpHost" 
-                    value={smtpHost} 
-                    onChange={(e) => setSmtpHost(e.target.value)} 
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="smtpPort">SMTP Port</Label>
-                  <Input 
-                    id="smtpPort" 
-                    value={smtpPort} 
-                    onChange={(e) => setSmtpPort(e.target.value)} 
-                  />
-                </div>
-              </div>
-              
-              <div className="space-y-2">
-                <Label htmlFor="smtpUser">SMTP Username</Label>
-                <Input 
-                  id="smtpUser" 
-                  value={smtpUser} 
-                  onChange={(e) => setSmtpUser(e.target.value)} 
-                />
-              </div>
-              
-              <div className="space-y-2">
-                <Label htmlFor="smtpPassword">SMTP Password</Label>
-                <Input 
-                  id="smtpPassword" 
-                  type="password" 
-                  value={smtpPassword} 
-                  onChange={(e) => setSmtpPassword(e.target.value)} 
-                />
-              </div>
-              
-              <div className="space-y-2">
-                <Label htmlFor="fromEmail">From Email Address</Label>
-                <Input 
-                  id="fromEmail" 
-                  type="email" 
-                  value={fromEmail} 
-                  onChange={(e) => setFromEmail(e.target.value)} 
-                />
-              </div>
-              
-              <div className="pt-4">
-                <Button onClick={handleSaveEmail}>Save Email Settings</Button>
-              </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        <TabsContent value="notifications" className="space-y-6">
-          <Card>
-            <CardHeader>
-              <CardTitle>Notification Preferences</CardTitle>
-              <CardDescription>Configure when and how you receive notifications</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="flex items-center justify-between">
-                <div className="space-y-1">
-                  <Label>Email Notifications</Label>
-                  <p className="text-sm text-muted-foreground">
-                    Receive email notifications for important events
-                  </p>
-                </div>
-                <Switch 
-                  checked={emailNotifications} 
-                  onCheckedChange={setEmailNotifications} 
-                />
-              </div>
-              
-              <div className="flex items-center justify-between">
-                <div className="space-y-1">
-                  <Label>Sync Notifications</Label>
-                  <p className="text-sm text-muted-foreground">
-                    Receive notifications when data synchronization completes
-                  </p>
-                </div>
-                <Switch 
-                  checked={syncNotifications} 
-                  onCheckedChange={setSyncNotifications} 
-                />
-              </div>
-              
-              <div className="flex items-center justify-between">
-                <div className="space-y-1">
-                  <Label>Expiry Notifications</Label>
-                  <p className="text-sm text-muted-foreground">
-                    Receive notifications about expiring licenses
-                  </p>
-                </div>
-                <Switch 
-                  checked={expiryNotifications} 
-                  onCheckedChange={setExpiryNotifications} 
-                />
-              </div>
-              
-              <div className="pt-4">
-                <Button onClick={handleSaveNotifications}>Save Notification Settings</Button>
-              </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        <TabsContent value="security" className="space-y-6">
-          <Card>
-            <CardHeader>
-              <CardTitle>Security Settings</CardTitle>
-              <CardDescription>Configure security policies and authentication</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="flex items-center justify-between">
-                <div className="space-y-1">
-                  <Label>Two-Factor Authentication</Label>
-                  <p className="text-sm text-muted-foreground">
-                    Require two-factor authentication for admin access
-                  </p>
-                </div>
-                <Switch 
-                  checked={twoFactorAuth} 
-                  onCheckedChange={setTwoFactorAuth} 
-                />
-              </div>
-              
-              <div className="space-y-2">
-                <Label htmlFor="sessionTimeout">Session Timeout (minutes)</Label>
-                <Input 
-                  id="sessionTimeout" 
-                  type="number" 
-                  value={sessionTimeout} 
-                  onChange={(e) => setSessionTimeout(e.target.value)} 
-                />
-              </div>
-              
-              <div className="space-y-2">
-                <Label htmlFor="passwordMinLength">Minimum Password Length</Label>
-                <Input 
-                  id="passwordMinLength" 
-                  type="number" 
-                  value={passwordMinLength} 
-                  onChange={(e) => setPasswordMinLength(e.target.value)} 
-                />
-              </div>
-              
-              <div className="pt-4">
-                <Button onClick={handleSaveSecurity}>Save Security Settings</Button>
-              </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        <TabsContent value="admin" className="space-y-6">
-          <Card>
-            <CardHeader>
-              <CardTitle>Admin Management</CardTitle>
-              <CardDescription>Manage administrator accounts and permissions</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="rounded-md border">
-                <div className="overflow-x-auto">
-                  <table className="w-full">
-                    <thead className="bg-muted">
+            <CardContent className='space-y-4'>
+              <div className='rounded-md border'>
+                <div className='overflow-x-auto'>
+                  <table className='w-full'>
+                    <thead className='bg-muted'>
                       <tr>
-                        <th className="px-4 py-2 text-left text-sm font-medium">Name</th>
-                        <th className="px-4 py-2 text-left text-sm font-medium">Email</th>
-                        <th className="px-4 py-2 text-left text-sm font-medium">Role</th>
-                        <th className="px-4 py-2 text-left text-sm font-medium">Last Login</th>
-                        <th className="px-4 py-2 text-left text-sm font-medium">Actions</th>
+                        <th className='px-4 py-2 text-left text-sm font-medium'>
+                          Username
+                        </th>
+                        <th className='px-4 py-2 text-left text-sm font-medium'>
+                          Email
+                        </th>
+                        <th className='px-4 py-2 text-left text-sm font-medium'>
+                          Department
+                        </th>
+                        <th className='px-4 py-2 text-left text-sm font-medium'>
+                          Privilege
+                        </th>
+                        <th className='px-4 py-2 text-left text-sm font-medium'>
+                          Sync
+                        </th>
+                        <th className='px-4 py-2 text-left text-sm font-medium'>
+                          Actions
+                        </th>
                       </tr>
                     </thead>
                     <tbody>
-                      {admins.map((admin) => (
-                        <tr key={admin.id} className="border-b">
-                          <td className="px-4 py-2 text-sm">{admin.name}</td>
-                          <td className="px-4 py-2 text-sm">{admin.email}</td>
-                          <td className="px-4 py-2 text-sm">{admin.role}</td>
-                          <td className="px-4 py-2 text-sm">{admin.lastLogin}</td>
-                          <td className="px-4 py-2 text-sm">
-                            <Button variant="outline" size="sm" className="mr-2">Edit</Button>
-                            <Button variant="destructive" size="sm">Remove</Button>
+                      {adminsLoading ? (
+                        <tr>
+                          <td colSpan={6} className='px-4 py-2 text-center'>
+                            <div className='flex items-center justify-center'>
+                              <div className='animate-spin rounded-full h-4 w-4 border-b-2 border-gray-900 mr-2'></div>
+                              Loading admins...
+                            </div>
                           </td>
                         </tr>
-                      ))}
+                      ) : admins.length === 0 ? (
+                        <tr>
+                          <td
+                            colSpan={6}
+                            className='px-4 py-2 text-center text-muted-foreground'
+                          >
+                            No admins found
+                          </td>
+                        </tr>
+                      ) : (
+                        admins.map(admin => (
+                          <tr key={admin.id} className='border-b'>
+                            <td className='px-4 py-2 text-sm'>
+                              {admin.user_name}
+                            </td>
+                            <td className='px-4 py-2 text-sm'>{admin.email}</td>
+                            <td className='px-4 py-2 text-sm'>
+                              {admin.department || '-'}
+                            </td>
+                            <td className='px-4 py-2 text-sm'>
+                              <span className='inline-flex items-center rounded-full bg-blue-100 px-2.5 py-0.5 text-xs font-medium text-blue-800'>
+                                {admin.privilege}
+                              </span>
+                            </td>
+                            <td className='px-4 py-2 text-sm'>
+                              {admin.sync ? (
+                                <span className='inline-flex items-center rounded-full bg-green-100 px-2.5 py-0.5 text-xs font-medium text-green-800'>
+                                  Enabled
+                                </span>
+                              ) : (
+                                <span className='inline-flex items-center rounded-full bg-red-100 px-2.5 py-0.5 text-xs font-medium text-red-800'>
+                                  Disabled
+                                </span>
+                              )}
+                            </td>
+                            <td className='px-4 py-2 text-sm'>
+                              <Button
+                                variant='outline'
+                                size='sm'
+                                className='mr-2'
+                                onClick={() => handleEditAdmin(admin)}
+                                disabled={!canEditSettings}
+                              >
+                                Edit
+                              </Button>
+                              <Button
+                                variant='destructive'
+                                size='sm'
+                                onClick={() => handleDeleteAdmin(admin.id)}
+                                disabled={!canEditSettings}
+                              >
+                                Remove
+                              </Button>
+                            </td>
+                          </tr>
+                        ))
+                      )}
                     </tbody>
                   </table>
                 </div>
               </div>
-              
-              <div className="pt-4">
-                <Button onClick={() => toast.info('Add admin functionality to be implemented')}>
-                  Add New Admin
-                </Button>
-              </div>
-              
-              <div className="pt-4">
-                <Button onClick={handleSaveAdmin}>Save Admin Settings</Button>
-              </div>
             </CardContent>
           </Card>
-          
+        </TabsContent>
+
+        <TabsContent value='logs' className='space-y-4'>
           <Card>
             <CardHeader>
               <CardTitle>System Logs</CardTitle>
-              <CardDescription>View system activity and audit logs</CardDescription>
+              <CardDescription>
+                View system activity and audit logs
+              </CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="rounded-md border p-4">
-                <pre className="text-sm text-muted-foreground">
-                  {`[2023-05-15 14:30:22] INFO: User admin@example.com logged in
-[2023-05-15 14:35:10] INFO: Data synchronization completed successfully
-[2023-05-15 15:22:45] WARN: Failed login attempt for user test@example.com
-[2023-05-15 16:01:33] INFO: License key validation performed
-[2023-05-15 16:45:17] INFO: Settings updated by admin@example.com`}
-                </pre>
-              </div>
-              <div className="pt-4">
-                <Button variant="outline">Export Logs</Button>
-              </div>
+              <LogsTable />
             </CardContent>
           </Card>
         </TabsContent>
       </Tabs>
+
+      <EditAdminDialog
+        open={isEditDialogOpen}
+        onOpenChange={setIsEditDialogOpen}
+        admin={editingAdmin}
+        onSave={handleSaveAdminDialog}
+      />
     </div>
   )
 }

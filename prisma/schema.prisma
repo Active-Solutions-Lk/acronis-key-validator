@@ -51,6 +51,7 @@ model credentials {
 
   @@index([pkg_id], map: "fk_pkg_id_with_pkg_id")
   @@index([user_id], map: "user_id")
+  @@index([code], map: "code_index") // Add index for faster QR code lookups
 }
 
 model pkg {

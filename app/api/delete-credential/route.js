@@ -1,21 +1,33 @@
-'use server';
-
 import prisma from '@/lib/prisma';
 import { NextResponse } from 'next/server';
+import { logAction, SEVERITY, ACTION } from '@/lib/logger';
 
 export async function DELETE(request) {
+  // console.log('DELETE credential route called');
+  
   try {
     const { searchParams } = new URL(request.url);
     const id = searchParams.get('id');
 
-    console.log('Deleting credential with ID:', id);
+    // console.log('Deleting credential:', id);
 
     // Validate required fields
     if (!id) {
+      // Log the validation error
+      await logAction({
+        relatedTable: 'credentials',
+        relatedTableId: 0,
+        severity: SEVERITY.ERROR,
+        message: 'Failed to delete credential: Missing ID parameter',
+        action: ACTION.DELETE,
+        statusCode: 400,
+        additionalData: { id }
+      });
+
       return NextResponse.json(
         { 
           success: false, 
-          error: 'Missing required parameter: id' 
+          error: 'Missing required field: id' 
         },
         { status: 400 }
       );
@@ -23,13 +35,21 @@ export async function DELETE(request) {
 
     // Check if credential exists
     const existingCredential = await prisma.credentials.findUnique({
-      where: { id: parseInt(id) },
-      include: {
-        master: true // Check if credential is referenced by master records
-      }
+      where: { id: parseInt(id) }
     });
 
     if (!existingCredential) {
+      // Log the not found error
+      await logAction({
+        relatedTable: 'credentials',
+        relatedTableId: parseInt(id),
+        severity: SEVERITY.ERROR,
+        message: `Failed to delete credential: Credential with ID ${id} not found`,
+        action: ACTION.DELETE,
+        statusCode: 404,
+        additionalData: { id }
+      });
+
       return NextResponse.json(
         { 
           success: false, 
@@ -39,23 +59,23 @@ export async function DELETE(request) {
       );
     }
 
-    // Check if credential is being used in master records
-    if (existingCredential.master && existingCredential.master.length > 0) {
-      return NextResponse.json(
-        { 
-          success: false, 
-          error: 'Cannot delete credential as it is being used in master records' 
-        },
-        { status: 409 }
-      );
-    }
-
     // Delete credential
     await prisma.credentials.delete({
       where: { id: parseInt(id) }
     });
 
-    console.log('Credential deleted successfully:', id);
+    // console.log('Credential deleted successfully:', id);
+
+    // Log the successful deletion
+    await logAction({
+      relatedTable: 'credentials',
+      relatedTableId: parseInt(id),
+      severity: SEVERITY.INFO,
+      message: `Credential with ID ${id} deleted successfully`,
+      action: ACTION.DELETE,
+      statusCode: 200,
+      additionalData: { id }
+    });
 
     return NextResponse.json({
       success: true,
@@ -65,6 +85,21 @@ export async function DELETE(request) {
 
   } catch (error) {
     console.error('Error deleting credential:', error);
+    
+    // Log the error
+    await logAction({
+      relatedTable: 'credentials',
+      relatedTableId: 0,
+      severity: SEVERITY.ERROR,
+      message: `Failed to delete credential: ${error.message}`,
+      action: ACTION.DELETE,
+      statusCode: 500,
+      additionalData: {
+        error: error.message,
+        stack: error.stack
+      }
+    });
+
     return NextResponse.json(
       { 
         success: false, 
@@ -79,13 +114,26 @@ export async function DELETE(request) {
 }
 
 export async function POST(request) {
+  // console.log('POST bulk delete credential route called');
+  
   try {
     const { ids } = await request.json();
 
-    console.log('Bulk deleting credentials with IDs:', ids);
+    // console.log('Bulk deleting credentials with IDs:', ids);
 
     // Validate required fields
     if (!ids || !Array.isArray(ids) || ids.length === 0) {
+      // Log the validation error
+      await logAction({
+        relatedTable: 'credentials',
+        relatedTableId: 0,
+        severity: SEVERITY.ERROR,
+        message: 'Failed to bulk delete credentials: Missing or empty IDs array',
+        action: ACTION.DELETE,
+        statusCode: 400,
+        additionalData: { ids }
+      });
+
       return NextResponse.json(
         { 
           success: false, 
@@ -99,6 +147,17 @@ export async function POST(request) {
     const credentialIds = ids.map(id => parseInt(id)).filter(id => !isNaN(id));
 
     if (credentialIds.length === 0) {
+      // Log the validation error
+      await logAction({
+        relatedTable: 'credentials',
+        relatedTableId: 0,
+        severity: SEVERITY.ERROR,
+        message: 'Failed to bulk delete credentials: No valid IDs provided',
+        action: ACTION.DELETE,
+        statusCode: 400,
+        additionalData: { ids }
+      });
+
       return NextResponse.json(
         { 
           success: false, 
@@ -108,45 +167,55 @@ export async function POST(request) {
       );
     }
 
-    // Check if any credentials are being used in master records
-    const credentialsInUse = await prisma.credentials.findMany({
+    // Delete credentials
+    const deleteResult = await prisma.credentials.deleteMany({
       where: { 
-        id: { in: credentialIds }
-      },
-      include: {
-        master: true
+        id: {
+          in: credentialIds
+        }
       }
     });
 
-    const credentialsWithMaster = credentialsInUse.filter(cred => cred.master.length > 0);
-    
-    if (credentialsWithMaster.length > 0) {
-      const inUseIds = credentialsWithMaster.map(cred => cred.id);
-      return NextResponse.json(
-        { 
-          success: false, 
-          error: `Cannot delete credentials with IDs ${inUseIds.join(', ')} as they are being used in master records` 
-        },
-        { status: 409 }
-      );
-    }
+    // console.log('Credentials bulk deleted successfully:', deleteResult.count);
 
-    // Delete credentials
-    const deleteResult = await prisma.credentials.deleteMany({
-      where: { id: { in: credentialIds } }
+    // Log the successful bulk deletion
+    await logAction({
+      relatedTable: 'credentials',
+      relatedTableId: 0,
+      severity: SEVERITY.INFO,
+      message: `Bulk deleted ${deleteResult.count} credentials`,
+      action: ACTION.DELETE,
+      statusCode: 200,
+      additionalData: { 
+        deletedCount: deleteResult.count,
+        ids: credentialIds
+      }
     });
-
-    console.log('Bulk delete completed. Deleted count:', deleteResult.count);
 
     return NextResponse.json({
       success: true,
-      message: `Successfully deleted ${deleteResult.count} credential(s)`,
+      message: `${deleteResult.count} credentials deleted successfully`,
       deletedCount: deleteResult.count,
       deletedIds: credentialIds
     }, { status: 200 });
 
   } catch (error) {
     console.error('Error bulk deleting credentials:', error);
+    
+    // Log the error
+    await logAction({
+      relatedTable: 'credentials',
+      relatedTableId: 0,
+      severity: SEVERITY.ERROR,
+      message: `Failed to bulk delete credentials: ${error.message}`,
+      action: ACTION.DELETE,
+      statusCode: 500,
+      additionalData: {
+        error: error.message,
+        stack: error.stack
+      }
+    });
+
     return NextResponse.json(
       { 
         success: false, 

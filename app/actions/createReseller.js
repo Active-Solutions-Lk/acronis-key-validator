@@ -2,7 +2,7 @@
 
 export default async function CreateReseller(resellerData) {
   try {
-    console.log('Creating reseller:', resellerData);
+    // console.log('Creating reseller:', resellerData);
 
     const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/create-reseller`, {
       method: 'POST',
@@ -18,7 +18,7 @@ export default async function CreateReseller(resellerData) {
     const responseData = await response.json();
     
     if (responseData.success) {
-      console.log('Reseller created successfully:', responseData.reseller.customer_id);
+      // console.log('Reseller created successfully:', responseData.reseller.customer_id);
       return { 
         success: true, 
         message: responseData.message,

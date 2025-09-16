@@ -29,25 +29,33 @@ import {
   SidebarMenuItem,
   useSidebar,
 } from "@/components/ui/sidebar"
+import { useAuth } from "@/components/auth-context"
 
 export function NavUser() {
   const { isMobile } = useSidebar()
+  const { logout } = useAuth()
   const [user, setUser] = useState({
     name: "Admin User",
     email: "admin@example.com",
-    avatar: "/avatars/default.png"
+    avatar: "/avatars/default.png",
+    username: "admin",
+    sync: false
   })
 
   useEffect(() => {
     // Retrieve user details from localStorage
-    const storedUser = localStorage.getItem('currentUser')
+    const storedUser = localStorage.getItem('currentUser');
+    // console.log("Stored user:", storedUser);
     if (storedUser) {
       try {
-        const userData = JSON.parse(storedUser)
+        const userData = JSON.parse(storedUser);
+        // console.log("User data:", userData);
         setUser({
           name: userData.user_name || "Admin User",
           email: userData.email || "admin@example.com",
-          avatar: userData.avatar || "/avatars/default.png"
+          avatar: userData.avatar || "/avatars/default.png",
+          username: userData.user_name || "admin",
+          sync: userData.sync !== undefined ? userData.sync : false
         })
       } catch (error) {
         console.error("Error parsing user data:", error)
@@ -55,12 +63,11 @@ export function NavUser() {
     }
   }, [])
 
-  const handleLogout = () => {
-    // Clear authentication status
-    localStorage.removeItem('isAuthenticated')
-    localStorage.removeItem('currentUser')
-    // Reload the page to show login dialog
-    window.location.reload()
+  const handleLogout = async () => {
+    // Call the proper logout function which will clear the session cookie
+    await logout()
+    // Redirect to welcome page
+    // window.location.href = '/welcome'
   }
 
   return (
@@ -73,7 +80,7 @@ export function NavUser() {
               className="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground"
             >
               <Avatar className="h-8 w-8 rounded-lg grayscale">
-                <AvatarImage src={user.avatar} alt={user.name} />
+                {/* <AvatarImage src={user.avatar} alt={user.name} /> */}
                 <AvatarFallback className="rounded-lg">
                   {user.name.charAt(0).toUpperCase()}
                 </AvatarFallback>
@@ -106,20 +113,13 @@ export function NavUser() {
                   <span className="text-muted-foreground truncate text-xs">
                     {user.email}
                   </span>
+                  <span className="text-muted-foreground truncate text-xs">
+                    Sync Access: {user.sync ? 'Enabled' : 'Disabled'}
+                  </span>
                 </div>
               </div>
             </DropdownMenuLabel>
             <DropdownMenuSeparator />
-            <DropdownMenuGroup>
-              <DropdownMenuItem>
-                <IconUserCircle />
-                Account
-              </DropdownMenuItem>
-              <DropdownMenuItem>
-                <IconNotification />
-                Notifications
-              </DropdownMenuItem>
-            </DropdownMenuGroup>
             <DropdownMenuSeparator />
             <DropdownMenuItem onClick={handleLogout}>
               <IconLogout />

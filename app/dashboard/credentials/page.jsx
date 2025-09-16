@@ -6,6 +6,7 @@ import AllPackages from '../../actions/allPackages'
 import CreateCredential from '../../actions/createCredential'
 import UpdateCredential from '../../actions/updateCredential'
 import { toast } from 'sonner'
+import { usePermissions } from '@/hooks/usePermissions'
 
 // Import new components
 import CredentialsHeader from '../../../components/dashboard/credentials/CredentialsHeader'
@@ -43,6 +44,26 @@ function CredentialsPage () {
   const [editingCell, setEditingCell] = React.useState(null)
   const [tempValue, setTempValue] = React.useState('')
 
+  // Get permissions hook
+  const { canEdit, canDelete, canView, user } = usePermissions()
+
+  // Check if user can access credentials
+  const canAccessCredentials = canView('credentials')
+  const canEditCredentials = canEdit('credentials')
+  const canDeleteCredentials = canDelete('credentials')
+
+  // If user can't view credentials, show access denied message
+  if (!canAccessCredentials) {
+    return (
+      <div className="flex items-center justify-center h-full">
+        <div className="text-center">
+          <h2 className="text-2xl font-bold mb-2">Access Denied</h2>
+          <p>You don't have permission to view this page.</p>
+        </div>
+      </div>
+    )
+  }
+
   const expectedColumns = ['email', 'password', 'package', 'quota', 'code']
 
   // Form state
@@ -67,17 +88,27 @@ function CredentialsPage () {
   // Inline editing functions
   const saveInlineEdit = React.useCallback(
     (rowId, field) => {
+      // Check if user has permission to edit
+      if (!canEditCredentials) {
+        toast.error('You do not have permission to edit credentials')
+        return
+      }
       handleInlineEdit(rowId, field, tempValue)
       setEditingCell(null)
       setTempValue('')
     },
-    [handleInlineEdit, tempValue]
+    [handleInlineEdit, tempValue, canEditCredentials]
   )
 
   const startInlineEdit = React.useCallback((rowId, field, currentValue) => {
+    // Check if user has permission to edit
+    if (!canEditCredentials) {
+      toast.error('You do not have permission to edit credentials')
+      return
+    }
     setEditingCell(`${rowId}-${field}`)
     setTempValue(currentValue || '')
-  }, [])
+  }, [canEditCredentials])
 
   const cancelInlineEdit = React.useCallback(() => {
     setEditingCell(null)
@@ -95,7 +126,14 @@ function CredentialsPage () {
     saveInlineEdit,
     cancelInlineEdit,
     startInlineEdit,
-    handleDeleteCredential,
+    handleDeleteCredential: (id) => {
+      // Check if user has permission to delete
+      if (!canDeleteCredentials) {
+        toast.error('You do not have permission to delete credentials')
+        return
+      }
+      handleDeleteCredential(id)
+    },
     setEditingRow,
     setFormData,
     setIsEditDialogOpen
@@ -126,7 +164,6 @@ function CredentialsPage () {
     })) || [], [users]
   )
 
-  // Memoized credentials for performance (for backward compatibility with master page)
   const memoizedAccountEmails = React.useMemo(() => 
     data?.map(cred => ({
       value: cred.email || '',
@@ -219,7 +256,7 @@ function CredentialsPage () {
         // Handle master data (for backward compatibility)
         if (masterResponse.success) {
           // We can use this data if needed for any master page functionality
-          console.log('Master data fetched:', masterResponse.responseData.data)
+         // console.log('Master data fetched:', masterResponse.responseData.data)
         } else {
           console.error('Failed to fetch master data:', masterResponse.error)
         }
@@ -277,6 +314,12 @@ function CredentialsPage () {
 
   // CRUD handlers
   const handleAddCredential = React.useCallback(async () => {
+    // Check if user has permission to create
+    if (!canEditCredentials) {
+      toast.error('You do not have permission to add credentials')
+      return
+    }
+    
     try {
       if (!formData.email || !formData.password || !formData.pkg_id) {
         toast.error('Please fill in all required fields')
@@ -321,7 +364,7 @@ function CredentialsPage () {
           user_id: ''
         })
         toast.success(result.message || 'Credential created successfully')
-        console.log('Adding credential:', newCredential)
+       // console.log('Adding credential:', newCredential)
       } else {
         toast.error(result.error || 'Failed to create credential')
       }
@@ -329,9 +372,15 @@ function CredentialsPage () {
       console.error('Error adding credential:', error)
       toast.error('An unexpected error occurred')
     }
-  }, [formData])
+  }, [formData, canEditCredentials])
 
   const handleEditCredential = React.useCallback(async () => {
+    // Check if user has permission to edit
+    if (!canEditCredentials) {
+      toast.error('You do not have permission to edit credentials')
+      return
+    }
+    
     try {
       if (!formData.email || !formData.password || !formData.pkg_id) {
         toast.error('Please fill in all required fields')
@@ -372,7 +421,7 @@ function CredentialsPage () {
         setIsEditDialogOpen(false)
         setEditingRow(null)
         toast.success(result.message || 'Credential updated successfully')
-        console.log('Editing credential:', updatedCredential)
+        //('Editing credential:', updatedCredential)
       } else {
         toast.error(result.error || 'Failed to update credential')
       }
@@ -380,9 +429,18 @@ function CredentialsPage () {
       console.error('Error updating credential:', error)
       toast.error('An unexpected error occurred')
     }
-  }, [formData, editingRow, data])
+  }, [formData, editingRow, data, canEditCredentials])
 
   const handleUploadCredential = React.useCallback(async (credentialData) => {
+    // Check if user has permission to create
+    if (!canEditCredentials) {
+      toast.error('You do not have permission to upload credentials')
+      return { 
+        success: false, 
+        error: 'You do not have permission to upload credentials'
+      }
+    }
+    
     try {
       const result = await CreateCredential({
         email: credentialData.email,
@@ -426,7 +484,7 @@ function CredentialsPage () {
         error: error.message || 'An unexpected error occurred'
       }
     }
-  }, [])
+  }, [canEditCredentials])
 
   const refreshData = React.useCallback(async () => {
     try {
@@ -497,7 +555,14 @@ function CredentialsPage () {
         setGlobalFilter={setGlobalFilter}
         table={mockTable}
         rowSelection={rowSelection}
-        handleBulkDelete={() => handleBulkDelete(rowSelection)}
+        handleBulkDelete={() => {
+          // Check if user has permission to delete
+          if (!canDeleteCredentials) {
+            toast.error('You do not have permission to delete credentials')
+            return
+          }
+          handleBulkDelete(rowSelection)
+        }}
       />
 
       {/* Add EditableTable for master page functionality */}
@@ -521,35 +586,44 @@ function CredentialsPage () {
         getRowHighlightClass={getRowHighlightClass}
       />
 
-      <AddCredentialDialog
-        isOpen={isAddDialogOpen}
-        onClose={() => setIsAddDialogOpen(false)}
-        formData={formData}
-        setFormData={setFormData}
-        packages={packages}
-        resellers={resellers}
-        users={users}
-        onSubmit={handleAddCredential}
-      />
+      {/* Only show add dialog if user has edit permissions */}
+      {canEditCredentials && (
+        <AddCredentialDialog
+          isOpen={isAddDialogOpen}
+          onClose={() => setIsAddDialogOpen(false)}
+          formData={formData}
+          setFormData={setFormData}
+          packages={packages}
+          resellers={resellers}
+          users={users}
+          onSubmit={handleAddCredential}
+        />
+      )}
 
-      <EditCredentialDialog
-        isOpen={isEditDialogOpen}
-        onClose={() => setIsEditDialogOpen(false)}
-        formData={formData}
-        setFormData={setFormData}
-        packages={packages}
-        resellers={resellers}
-        users={users}
-        onSubmit={handleEditCredential}
-      />
+      {/* Only show edit dialog if user has edit permissions */}
+      {canEditCredentials && (
+        <EditCredentialDialog
+          isOpen={isEditDialogOpen}
+          onClose={() => setIsEditDialogOpen(false)}
+          formData={formData}
+          setFormData={setFormData}
+          packages={packages}
+          resellers={resellers}
+          users={users}
+          onSubmit={handleEditCredential}
+        />
+      )}
 
-      <FileUploadDialog
-        isOpen={isFileUploadDialogOpen}
-        onClose={() => setIsFileUploadDialogOpen(false)}
-        packages={packages}
-        uploadCredentials={handleUploadCredential}
-        expectedColumns = {expectedColumns}
-      />
+      {/* Only show file upload dialog if user has edit permissions */}
+      {canEditCredentials && (
+        <FileUploadDialog
+          isOpen={isFileUploadDialogOpen}
+          onClose={() => setIsFileUploadDialogOpen(false)}
+          packages={packages}
+          uploadCredentials={handleUploadCredential}
+          expectedColumns = {expectedColumns}
+        />
+      )}
       <Toaster />
     </div>
   )

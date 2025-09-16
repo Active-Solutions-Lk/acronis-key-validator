@@ -1,7 +1,7 @@
 'use client'
 
-import { SettingsClient } from './page.client'
+import { SettingsPageClient } from './page.client'
 
 export default function SettingsPage() {
-  return <SettingsClient />
+  return <SettingsPageClient />
 }

@@ -7,7 +7,7 @@ export async function POST(request) {
   try {
     const { id, ids } = await request.json();
 
-    console.log('Delete request:', { id, ids });
+    // console.log('Delete request:', { id, ids });
 
     // Handle single delete
     if (id) {
@@ -45,7 +45,7 @@ export async function POST(request) {
         where: { customer_id: parseInt(id) }
       });
 
-      console.log('Reseller deleted successfully:', id);
+      // console.log('Reseller deleted successfully:', id);
 
       return NextResponse.json({
         success: true,
@@ -86,7 +86,7 @@ export async function POST(request) {
         where: { customer_id: { in: resellerIds } }
       });
 
-      console.log('Resellers bulk deleted successfully:', deleteResult.count);
+      // console.log('Resellers bulk deleted successfully:', deleteResult.count);
 
       return NextResponse.json({
         success: true,

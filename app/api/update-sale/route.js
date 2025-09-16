@@ -134,7 +134,7 @@ export async function PUT(request) {
       }
     };
 
-    console.log('Sale updated successfully:', updatedSale.id);
+    // console.log('Sale updated successfully:', updatedSale.id);
 
     return NextResponse.json({
       success: true,

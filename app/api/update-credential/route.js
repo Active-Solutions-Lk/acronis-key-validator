@@ -7,14 +7,14 @@ export async function PUT(request) {
   try {
     const { id, email, password, pkg_id, quota, code } = await request.json();
 
-    console.log('Updating credential with data:', {
-      id,
-      email,
-      password: '***',
-      pkg_id,
-      quota,
-      code
-    });
+    // console.log('Updating credential with data:', {
+    //   id,
+    //   email,
+    //   password: '***',
+    //   pkg_id,
+    //   quota,
+    //   code
+    // });
 
     // Validate required fields
     if (!id) {
@@ -107,7 +107,7 @@ export async function PUT(request) {
       }
     });
 
-    console.log('Credential updated successfully:', updatedCredential.id);
+    // console.log('Credential updated successfully:', updatedCredential.id);
 
     return NextResponse.json({
       success: true,

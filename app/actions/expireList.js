@@ -17,7 +17,7 @@ export default async function expireList() {
     }
 
     if (!response.ok) {
-      console.log('response', response)
+      // console.log('response', response)
       throw new Error('API request failed');
     }
 

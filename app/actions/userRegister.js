@@ -24,7 +24,7 @@ export async function userRegister(formData) {
     const result = await response.json();
     
     // Log the full response for debugging
-    console.log('User register API response:', response.status, result);
+    // console.log('User register API response:', response.status, result);
     
     if (!response.ok) {
       return { 

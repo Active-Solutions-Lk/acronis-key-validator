@@ -32,26 +32,26 @@ export async function POST(request) {
       user_id
     } = await request.json()
 
-    console.log('received data', {
-      id,
-      date,
-      reseller,
-      hoDate,
-      pkg,
-      actDate,
-      endDate,
-      customer,
-      address,
-      name,
-      email,
-      tel,
-      city,
-      code,
-      accMail,
-      password,
-      reseller_id,
-      user_id
-    })
+    // console.log('received data', {
+    //   id,
+    //   date,
+    //   reseller,
+    //   hoDate,
+    //   pkg,
+    //   actDate,
+    //   endDate,
+    //   customer,
+    //   address,
+    //   name,
+    //   email,
+    //   tel,
+    //   city,
+    //   code,
+    //   accMail,
+    //   password,
+    //   reseller_id,
+    //   user_id
+    // })
 
     // Validate required fields
     if (!id) {

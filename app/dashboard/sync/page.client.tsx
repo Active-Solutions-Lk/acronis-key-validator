@@ -36,9 +36,9 @@ function SyncPageClient () {
     setSyncStatus('idle')
     try {
       const response = await syncData()
-      console.log('response', response)
+    //  console.log('response', response)
       if (response.success) {
-        console.log(response.data) // Fixed: Use response.data instead of response.responseData.data
+       // console.log(response.data) // Fixed: Use response.data instead of response.responseData.data
         setSyncStatus('success')
         setSyncMessage(response.message || 'Emails synced successfully') // Use actual message from response
         setLastSync(new Date())
@@ -51,7 +51,7 @@ function SyncPageClient () {
     } catch (error) {
       setSyncStatus('error')
       setSyncMessage('Error syncing emails')
-      console.log('Error fetching master data:', error)
+    ///  console.log('Error fetching master data:', error)
     } finally {
       setIsLoading(false)
     }

@@ -19,6 +19,7 @@ import {
 } from "@/components/ui/dropdown-menu"
 import { Input } from "@/components/ui/input"
 import DataFeed from '@/components/admin/DataFeed'
+import { usePermissions } from '@/hooks/usePermissions'
 
 export default function CredentialsHeader({
   data,
@@ -32,8 +33,16 @@ export default function CredentialsHeader({
   table,
   rowSelection,
   handleBulkDelete
-  
 }) {
+  // Get permissions
+  const { canEdit, canDelete, canView } = usePermissions()
+  
+  // Check if user can perform actions
+  const canAddCredentials = canEdit('credentials')
+  const canImportCredentials = canEdit('credentials')
+  const canExportCredentials = canView('credentials')
+  const canDeleteSelected = canDelete('credentials') && Object.keys(rowSelection).length > 0
+
   return (
     <div className="space-y-4">
       {/* Header */}
@@ -49,18 +58,24 @@ export default function CredentialsHeader({
             <RefreshCw className={`mr-2 h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
             Refresh
           </Button>
-          <Button onClick={() => setIsFileUploadDialogOpen(true)} variant="outline" size="sm">
-            <Upload className="mr-2 h-4 w-4" />
-            Import
-          </Button>
-          <Button variant="outline" size="sm">
-            <Download className="mr-2 h-4 w-4" />
-            Export
-          </Button>
-          <Button onClick={() => setIsAddDialogOpen(true)}>
-            <Plus className="mr-2 h-4 w-4" />
-            Add Credential
-          </Button>
+          {canImportCredentials && (
+            <Button onClick={() => setIsFileUploadDialogOpen(true)} variant="outline" size="sm">
+              <Upload className="mr-2 h-4 w-4" />
+              Import
+            </Button>
+          )}
+          {canExportCredentials && (
+            <Button variant="outline" size="sm">
+              <Download className="mr-2 h-4 w-4" />
+              Export
+            </Button>
+          )}
+          {canAddCredentials && (
+            <Button onClick={() => setIsAddDialogOpen(true)}>
+              <Plus className="mr-2 h-4 w-4" />
+              Add Credential
+            </Button>
+          )}
         </div>
       </div>
 
@@ -105,7 +120,7 @@ export default function CredentialsHeader({
           </DropdownMenu>
         </div>
 
-        {Object.keys(rowSelection).length > 0 && (
+        {canDeleteSelected && (
           <Button variant="destructive" onClick={handleBulkDelete}>
             <Trash2 className="mr-2 h-4 w-4" />
             Delete Selected ({Object.keys(rowSelection).length})

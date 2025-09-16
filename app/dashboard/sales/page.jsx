@@ -10,13 +10,19 @@ import { toast } from 'sonner';
 import { RefreshCw } from 'lucide-react';
 import AllSales from '@/app/actions/allSales';
 import UpdateSale from '@/app/actions/updateSale';
+import { usePermissions } from '@/hooks/usePermissions';
 
 function SalesPage() {
+  const { canView, canEdit } = usePermissions();
   const [sales, setSales] = useState([]);
   const [loading, setLoading] = useState(true);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [editingSale, setEditingSale] = useState(null);
   const [isRefreshing, setIsRefreshing] = useState(false);
+
+  // Check if user can access sales
+  const canViewSales = canView('sales');
+  const canEditSales = canEdit('sales');
 
   const fetchSales = async () => {
     try {
@@ -56,19 +62,37 @@ function SalesPage() {
   };
 
   useEffect(() => {
+    // If user can't view sales, don't load data
+    if (!canViewSales) {
+      setLoading(false);
+      return;
+    }
+    
     fetchSales();
-  }, []);
+  }, [canViewSales]);
 
   const handleDataChange = () => {
     fetchSales();
   };
 
   const handleEditSale = (sale) => {
+    // Check if user has permission to edit sales
+    if (!canEditSales) {
+      toast.error('You do not have permission to edit sales');
+      return;
+    }
+    
     setEditingSale(sale);
     setIsEditDialogOpen(true);
   };
 
   const handleUpdateSale = async (id, saleData) => {
+    // Check if user has permission to edit sales
+    if (!canEditSales) {
+      toast.error('You do not have permission to edit sales');
+      return { success: false, error: 'Permission denied' };
+    }
+    
     try {
       const result = await UpdateSale(id, saleData);
       if (result.success) {
@@ -85,6 +109,18 @@ function SalesPage() {
       return { success: false, error: 'Failed to update sale.' };
     }
   };
+
+  // If user can't view sales, show access denied message
+  if (!canViewSales) {
+    return (
+      <div className="flex items-center justify-center h-full">
+        <div className="text-center">
+          <h2 className="text-2xl font-bold mb-2">Access Denied</h2>
+          <p>You don&apos;t have permission to view sales data.</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="container ">
@@ -104,7 +140,7 @@ function SalesPage() {
                 <RefreshCw className={`h-4 w-4 ${isRefreshing ? 'animate-spin' : ''}`} />
                 <span className="ml-2">{isRefreshing ? 'Refreshing...' : 'Refresh'}</span>
               </Button>
-              <AddSaleDialog onSaleAdded={handleDataChange} />
+              {canEditSales && <AddSaleDialog onSaleAdded={handleDataChange} />}
             </div>
           </div>
         </CardHeader>

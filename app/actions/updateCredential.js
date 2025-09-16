@@ -2,7 +2,7 @@
 
 export default async function UpdateCredential(id, credentialData) {
   try {
-    console.log('Updating credential:', id, { ...credentialData, password: '***' });
+    // console.log('Updating credential:', id, { ...credentialData, password: '***' });
 
     const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/update-credentials`, {
       method: 'POST',
@@ -18,7 +18,7 @@ export default async function UpdateCredential(id, credentialData) {
     const responseData = await response.json();
     
     if (responseData.success) {
-      console.log('Credential updated successfully:', responseData.user.id);
+      // console.log('Credential updated successfully:', responseData.user.id);
       return { 
         success: true, 
         message: responseData.message,

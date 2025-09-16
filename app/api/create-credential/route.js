@@ -2,25 +2,38 @@
 
 import prisma from '@/lib/prisma';
 import { NextResponse } from 'next/server';
+import { logAction, SEVERITY, ACTION } from '@/lib/logger';
+import { cookies } from 'next/headers';
 
 export async function POST(request) {
   try {
     const { email, password, pkg_id, quota, code, reseller_id, user_id } = await request.json();
 
-    console.log('Creating credential with data:', {
-      email,
-      password: '***',
-      pkg_id,
-      pkg_id_type: typeof pkg_id,
-      pkg_id_cleaned: pkg_id.toString().trim().replace(/\r\n|\r|\n/g, ''),
-      quota,
-      code,
-      reseller_id,
-      user_id
-    });
+    // console.log('Creating credential with data:', {
+    //   email,
+    //   password: '***',
+    //   pkg_id,
+    //   pkg_id_type: typeof pkg_id,
+    //   pkg_id_cleaned: pkg_id.toString().trim().replace(/\r\n|\r|\n/g, ''),
+    //   quota,
+    //   code,
+    //   reseller_id,
+    //   user_id
+    // });
 
     // Validate required fields
     if (!email || !password || !pkg_id) {
+      // Log the validation error
+      await logAction({
+        relatedTable: 'credentials',
+        relatedTableId: 0,
+        severity: SEVERITY.ERROR,
+        message: 'Failed to create credential: Missing required fields',
+        action: ACTION.CREATE,
+        statusCode: 400,
+        additionalData: { email, pkg_id }
+      });
+
       return NextResponse.json(
         { 
           success: false, 
@@ -36,6 +49,17 @@ export async function POST(request) {
     });
 
     if (existingCredential) {
+      // Log the duplicate error
+      await logAction({
+        relatedTable: 'credentials',
+        relatedTableId: 0,
+        severity: SEVERITY.ERROR,
+        message: `Failed to create credential: Email "${email}" already exists`,
+        action: ACTION.CREATE,
+        statusCode: 409,
+        additionalData: { email }
+      });
+
       return NextResponse.json(
         { 
           success: false, 
@@ -49,38 +73,41 @@ export async function POST(request) {
     let packageRecord;
     const pkgIdAsNumber = parseInt(pkg_id);
     
-    console.log('Package lookup:', {
-      original_pkg_id: pkg_id,
-      parsed_number: pkgIdAsNumber,
-      is_number: !isNaN(pkgIdAsNumber)
-    });
-    
+    // console.log('Package lookup:', {
+    //   pkg_id,
+    //   pkgIdAsNumber,
+    //   isNumber: !isNaN(pkgIdAsNumber)
+    // });
+
     if (!isNaN(pkgIdAsNumber)) {
-      // If pkg_id is a valid number, look up by ID
+      // pkg_id is a number, look up by ID
       packageRecord = await prisma.pkg.findUnique({
         where: { id: pkgIdAsNumber }
       });
-      console.log('Package found by ID:', packageRecord?.name);
+      // console.log('Package found by ID:', packageRecord?.name);
     } else {
-      // If pkg_id is not a number, treat it as package name and look up by name
+      // pkg_id is a string, look up by name (case-insensitive)
       const cleanPackageName = pkg_id.toString().trim().replace(/\r\n|\r|\n/g, '');
-      console.log('Looking up package by name:', cleanPackageName);
+      // console.log('Looking for package by name:', cleanPackageName);
       
-      // Try exact match first
+      // First try exact match
       packageRecord = await prisma.pkg.findFirst({
         where: { 
-          name: cleanPackageName
+          name: {
+            equals: cleanPackageName,
+            mode: 'insensitive'
+          }
         }
       });
-      console.log('Package found by exact name:', packageRecord?.name);
       
-      // If exact match fails, get all packages and do case-insensitive search
       if (!packageRecord) {
+        // Get all packages for case-insensitive search
         const allPackages = await prisma.pkg.findMany({
           select: { id: true, name: true }
         });
         
-        // Try case-insensitive exact match
+        // console.log('All packages:', allPackages);
+        
         packageRecord = allPackages.find(pkg => 
           pkg.name?.toLowerCase() === cleanPackageName.toLowerCase()
         );
@@ -93,7 +120,7 @@ export async function POST(request) {
           );
         }
         
-        console.log('Package found by case-insensitive search:', packageRecord?.name);
+        // console.log('Package found by case-insensitive search:', packageRecord?.name);
       }
     }
 
@@ -103,8 +130,22 @@ export async function POST(request) {
         select: { id: true, name: true }
       });
       
-      console.log('Available packages:', availablePackages);
+      // console.log('Available packages:', availablePackages);
       
+      // Log the package not found error
+      await logAction({
+        relatedTable: 'credentials',
+        relatedTableId: 0,
+        severity: SEVERITY.ERROR,
+        message: `Failed to create credential: Package "${pkg_id}" not found`,
+        action: ACTION.CREATE,
+        statusCode: 404,
+        additionalData: { 
+          pkg_id, 
+          availablePackages: availablePackages.map(p => p.name) 
+        }
+      });
+
       return NextResponse.json(
         { 
           success: false, 
@@ -144,7 +185,7 @@ export async function POST(request) {
       }
     });
 
-    console.log('Credential created successfully:', newCredential.id);
+    // console.log('Credential created successfully:', newCredential.id);
 
     // Create sale record if reseller_id is provided
     if (reseller_id) {
@@ -155,12 +196,27 @@ export async function POST(request) {
             credentials_id: newCredential.id
           }
         });
-        console.log('Sale record created for reseller:', reseller_id);
+        // console.log('Sale record created for reseller:', reseller_id);
       } catch (saleError) {
         console.error('Error creating sale record:', saleError);
         // Don't fail the credential creation if sale creation fails
       }
     }
+
+    // Log the successful creation
+    await logAction({
+      relatedTable: 'credentials',
+      relatedTableId: newCredential.id,
+      severity: SEVERITY.INFO,
+      message: `Credential with email "${newCredential.email}" created successfully`,
+      action: ACTION.CREATE,
+      statusCode: 201,
+      additionalData: {
+        email: newCredential.email,
+        pkg_id: newCredential.pkg_id,
+        code: newCredential.code
+      }
+    });
 
     // Return the created credential with related data
     const credentialWithRelations = await prisma.credentials.findUnique({
@@ -179,16 +235,6 @@ export async function POST(request) {
             email: true,
             company: true
           }
-        },
-        sales: {
-          include: {
-            reseller: {
-              select: {
-                customer_id: true,
-                company_name: true
-              }
-            }
-          }
         }
       }
     });
@@ -201,6 +247,21 @@ export async function POST(request) {
 
   } catch (error) {
     console.error('Error creating credential:', error);
+    
+    // Log the error
+    await logAction({
+      relatedTable: 'credentials',
+      relatedTableId: 0,
+      severity: SEVERITY.ERROR,
+      message: `Failed to create credential: ${error.message}`,
+      action: ACTION.CREATE,
+      statusCode: 500,
+      additionalData: {
+        error: error.message,
+        stack: error.stack
+      }
+    });
+
     return NextResponse.json(
       { 
         success: false, 

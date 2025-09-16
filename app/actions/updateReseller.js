@@ -2,7 +2,7 @@
 
 export default async function UpdateReseller(id, resellerData) {
   try {
-    console.log('Updating reseller:', id, resellerData);
+    // console.log('Updating reseller:', id, resellerData);
 
     const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/update-reseller`, {
       method: 'PUT',
@@ -18,7 +18,7 @@ export default async function UpdateReseller(id, resellerData) {
     const responseData = await response.json();
     
     if (responseData.success) {
-      console.log('Reseller updated successfully:', responseData.reseller.customer_id);
+      // console.log('Reseller updated successfully:', responseData.reseller.customer_id);
       return { 
         success: true, 
         message: responseData.message,

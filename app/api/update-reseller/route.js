@@ -21,16 +21,16 @@ export async function PUT(request) {
     // Use id or customer_id for updating
     const resellerId = id || customer_id;
 
-    console.log('Updating reseller with ID:', resellerId, {
-      company_name,
-      address,
-      type,
-      credit_limit,
-      payment_terms,
-      note,
-      vat,
-      city
-    });
+    // console.log('Updating reseller with ID:', resellerId, {
+    //   company_name,
+    //   address,
+    //   type,
+    //   credit_limit,
+    //   payment_terms,
+    //   note,
+    //   vat,
+    //   city
+    // });
 
     // Validate required fields
     if (!resellerId) {
@@ -126,7 +126,7 @@ export async function PUT(request) {
       }
     });
 
-    console.log('Reseller updated successfully:', updatedReseller.customer_id);
+    // console.log('Reseller updated successfully:', updatedReseller.customer_id);
 
     return NextResponse.json({
       success: true,

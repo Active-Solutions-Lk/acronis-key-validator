@@ -2,7 +2,7 @@
 
 export default async function DeleteCredential(id) {
   try {
-    console.log('Deleting credential:', id);
+    // console.log('Deleting credential:', id);
 
     const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/delete-credential?id=${id}`, {
       method: 'DELETE',
@@ -17,7 +17,7 @@ export default async function DeleteCredential(id) {
     const responseData = await response.json();
     
     if (responseData.success) {
-      console.log('Credential deleted successfully:', responseData.deletedId);
+      // console.log('Credential deleted successfully:', responseData.deletedId);
       return { 
         success: true, 
         message: responseData.message,
@@ -40,7 +40,7 @@ export default async function DeleteCredential(id) {
 
 export async function BulkDeleteCredentials(ids) {
   try {
-    console.log('Bulk deleting credentials:', ids);
+    // console.log('Bulk deleting credentials:', ids);
 
     const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/delete-credential`, {
       method: 'POST',
@@ -56,7 +56,7 @@ export async function BulkDeleteCredentials(ids) {
     const responseData = await response.json();
     
     if (responseData.success) {
-      console.log('Credentials bulk deleted successfully:', responseData.deletedCount);
+      // console.log('Credentials bulk deleted successfully:', responseData.deletedCount);
       return { 
         success: true, 
         message: responseData.message,

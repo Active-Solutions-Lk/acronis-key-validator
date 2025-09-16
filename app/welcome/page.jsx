@@ -77,14 +77,14 @@ export default function Welcome () {
   // Capture code from URL and validate it on mount
   useEffect(() => {
     const code = searchParams.get('code')
-    console.log('Code from URL:', code)
+ //   console.log('Code from URL:', code)
     if (code) {
       setFormData(prev => ({ ...prev, code }))
       const validateCode = async () => {
         try {
           // Validate the code (which is actually the ID) first
           const validationResult = await validateQRCode(code)
-          console.log('Validation result:', validationResult)
+       //   console.log('Validation result:', validationResult)
           
           if (validationResult.status === 200) {
             // If validation is successful, we can get the package name from the validation result
@@ -140,7 +140,7 @@ export default function Welcome () {
 
     try {
       const result = await userRegister(submitData)
-      console.log('User register result:', result) // Add logging for debugging
+    //  console.log('User register result:', result) // Add logging for debugging
       if (result.success) {
         setSuccess('User data submitted successfully!')
         setFormData({

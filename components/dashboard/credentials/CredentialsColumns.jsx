@@ -22,6 +22,7 @@ import {
 } from "@/components/ui/dropdown-menu"
 import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
+import { usePermissions } from '@/hooks/usePermissions'
 
 export function useCredentialsColumns({
   showPasswords,
@@ -37,6 +38,11 @@ export function useCredentialsColumns({
   setFormData,
   setIsEditDialogOpen
 }) {
+  const { canEdit, canDelete, canView } = usePermissions()
+  
+  const canEditCredentials = canEdit('credentials')
+  const canDeleteCredentials = canDelete('credentials')
+
   return React.useMemo(() => [
     {
       id: "select",
@@ -120,7 +126,7 @@ export function useCredentialsColumns({
         return (
           <div 
             className="cursor-pointer hover:bg-gray-50 p-1 rounded"
-            onClick={() => startInlineEdit(row.original.id, "email", email)}
+            onClick={() => canEditCredentials && startInlineEdit(row.original.id, "email", email)}
           >
             {email}
           </div>
@@ -168,7 +174,7 @@ export function useCredentialsColumns({
           <div className="flex items-center space-x-2">
             <div 
               className="cursor-pointer hover:bg-gray-50 p-1 rounded flex-1"
-              onClick={() => startInlineEdit(row.original.id, "password", password)}
+              onClick={() => canEditCredentials && startInlineEdit(row.original.id, "password", password)}
             >
               {isVisible ? password : "••••••••"}
             </div>
@@ -253,7 +259,7 @@ export function useCredentialsColumns({
         return (
           <div 
             className="cursor-pointer hover:bg-gray-50 p-1 rounded text-right"
-            onClick={() => startInlineEdit(row.original.id, "quota", quota)}
+            onClick={() => canEditCredentials && startInlineEdit(row.original.id, "quota", quota)}
           >
             {quota ? quota.toLocaleString() : "—"}
           </div>
@@ -298,7 +304,7 @@ export function useCredentialsColumns({
         return (
           <div 
             className="cursor-pointer hover:bg-gray-50 p-1 rounded"
-            onClick={() => startInlineEdit(row.original.id, "code", code)}
+            onClick={() => canEditCredentials && startInlineEdit(row.original.id, "code", code)}
           >
             {code ? (
               <Badge variant="outline">{code}</Badge>
@@ -357,29 +363,33 @@ export function useCredentialsColumns({
                 Copy password
               </DropdownMenuItem>
               <DropdownMenuSeparator />
-              <DropdownMenuItem
-                onClick={() => {
-                  setEditingRow(credential)
-                  setFormData({
-                    email: credential.email,
-                    password: credential.password,
-                    pkg_id: credential.pkg_id.toString(),
-                    quota: credential.quota?.toString() || "",
-                    code: credential.code || ""
-                  })
-                  setIsEditDialogOpen(true)
-                }}
-              >
-                <Edit className="mr-2 h-4 w-4" />
-                Edit
-              </DropdownMenuItem>
-              <DropdownMenuItem
-                onClick={() => handleDeleteCredential(credential.id)}
-                className="text-red-600"
-              >
-                <Trash2 className="mr-2 h-4 w-4" />
-                Delete
-              </DropdownMenuItem>
+              {canEditCredentials && (
+                <DropdownMenuItem
+                  onClick={() => {
+                    setEditingRow(credential)
+                    setFormData({
+                      email: credential.email,
+                      password: credential.password,
+                      pkg_id: credential.pkg_id.toString(),
+                      quota: credential.quota?.toString() || "",
+                      code: credential.code || ""
+                    })
+                    setIsEditDialogOpen(true)
+                  }}
+                >
+                  <Edit className="mr-2 h-4 w-4" />
+                  Edit
+                </DropdownMenuItem>
+              )}
+              {canDeleteCredentials && (
+                <DropdownMenuItem
+                  onClick={() => handleDeleteCredential(credential.id)}
+                  className="text-red-600"
+                >
+                  <Trash2 className="mr-2 h-4 w-4" />
+                  Delete
+                </DropdownMenuItem>
+              )}
             </DropdownMenuContent>
           </DropdownMenu>
         )
@@ -397,6 +407,8 @@ export function useCredentialsColumns({
     handleDeleteCredential,
     setEditingRow,
     setFormData,
-    setIsEditDialogOpen
+    setIsEditDialogOpen,
+    canEditCredentials,
+    canDeleteCredentials
   ])
 }

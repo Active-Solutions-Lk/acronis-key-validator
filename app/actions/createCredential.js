@@ -2,7 +2,7 @@
 
 export default async function CreateCredential(credentialData) {
   try {
-    console.log('Creating credential:', { ...credentialData, password: '***' });
+    // console.log('Creating credential:', { ...credentialData, password: '***' });
 
     const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/create-credential`, {
       method: 'POST',
@@ -18,7 +18,7 @@ export default async function CreateCredential(credentialData) {
     const responseData = await response.json();
     
     if (responseData.success) {
-      console.log('Credential created successfully:', responseData.credential.id);
+      // console.log('Credential created successfully:', responseData.credential.id);
       return { 
         success: true, 
         message: responseData.message,

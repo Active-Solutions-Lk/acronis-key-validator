@@ -12,15 +12,15 @@ export async function POST() {
       cronJob = cron.schedule(
         '59 23 * * *', // Run at 11:59 PM daily
         async () => {
-          console.log('Running daily syncData job at 11:59 PM Asia/Colombo...');
+          // console.log('Running daily syncData job at 11:59 PM Asia/Colombo...');
           const result = await syncData();
-          console.log('Daily syncData result:', result);
+          // console.log('Daily syncData result:', result);
         },
         {
           timezone: 'Asia/Colombo' // Set to UTC+05:30 (Colombo, Sri Lanka)
         }
       );
-      console.log('Cron job scheduled to run daily at 11:59 PM Asia/Colombo');
+      // console.log('Cron job scheduled to run daily at 11:59 PM Asia/Colombo');
     }
     return NextResponse.json(
       { message: 'Cron job scheduled or already running' },

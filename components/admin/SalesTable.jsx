@@ -15,8 +15,12 @@ import { Input } from '@/components/ui/input';
 import { toast } from 'sonner';
 import { deleteSale } from '@/app/actions/deleteSale';
 import ViewDetailsDialog from '@/components/admin/ViewDetailsDialog';
+import { usePermissions } from '@/hooks/usePermissions';
 
 export function SalesTable({ sales, onSaleDeleted, onSaleEdit }) {
+  const { canEdit } = usePermissions();
+  const canEditSales = canEdit('sales');
+  
   const [searchTerm, setSearchTerm] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
   const [viewDialog, setViewDialog] = useState({
@@ -58,6 +62,12 @@ export function SalesTable({ sales, onSaleDeleted, onSaleEdit }) {
   };
 
   const handleDelete = async (saleId) => {
+    // Check if user has permission to edit sales
+    if (!canEditSales) {
+      toast.error('You do not have permission to delete sales');
+      return;
+    }
+    
     const confirmDelete = window.confirm('Are you sure you want to delete this sale?');
     
     if (confirmDelete) {
@@ -154,20 +164,24 @@ export function SalesTable({ sales, onSaleDeleted, onSaleEdit }) {
                     </TableCell>
                     <TableCell className="text-right">
                       <div className="flex justify-end gap-2">
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => onSaleEdit(sale)}
-                        >
-                          <Edit className="h-4 w-4" />
-                        </Button>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => handleDelete(sale.id)}
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
+                        {canEditSales && (
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => onSaleEdit(sale)}
+                          >
+                            <Edit className="h-4 w-4" />
+                          </Button>
+                        )}
+                        {canEditSales && (
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => handleDelete(sale.id)}
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        )}
                       </div>
                     </TableCell>
                   </TableRow>

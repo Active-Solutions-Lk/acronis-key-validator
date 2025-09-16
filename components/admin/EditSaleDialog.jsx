@@ -13,6 +13,7 @@ import { Combobox } from '@/components/ui/combobox';
 import { toast } from 'sonner';
 import AllResellers from '@/app/actions/allResellers';
 import AllCredentials from '@/app/actions/allCredentials';
+import { usePermissions } from '@/hooks/usePermissions';
 
 export default function EditSaleDialog({ 
   isOpen, 
@@ -20,6 +21,9 @@ export default function EditSaleDialog({
   saleData, 
   onUpdateSale 
 }) {
+  const { canEdit } = usePermissions();
+  const canEditSales = canEdit('sales');
+  
   const [isLoading, setIsLoading] = useState(false);
   const [resellers, setResellers] = useState([]);
   const [credentials, setCredentials] = useState([]);
@@ -90,6 +94,13 @@ export default function EditSaleDialog({
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    
+    // Check if user has permission to edit sales
+    if (!canEditSales) {
+      toast.error('You do not have permission to edit sales');
+      return;
+    }
+    
     setIsLoading(true);
     
     try {
@@ -117,6 +128,11 @@ export default function EditSaleDialog({
       setIsLoading(false);
     }
   };
+
+  // Don't render the dialog if user doesn't have edit permissions
+  if (!canEditSales) {
+    return null;
+  }
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>

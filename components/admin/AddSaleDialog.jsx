@@ -17,8 +17,12 @@ import { fetchCredentialsByCodes } from '@/app/actions/fetchCredentialsByCodes';
 import { toast } from 'sonner';
 import AllResellers from '@/app/actions/allResellers';
 import CheckCredentialSale from '@/app/actions/checkCredentialSale';
+import { usePermissions } from '@/hooks/usePermissions';
 
 export function AddSaleDialog({ onSaleAdded }) {
+  const { canEdit } = usePermissions();
+  const canEditSales = canEdit('sales');
+  
   const [isOpen, setIsOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [resellers, setResellers] = useState([]);
@@ -171,6 +175,13 @@ export function AddSaleDialog({ onSaleAdded }) {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    
+    // Check if user has permission to edit sales
+    if (!canEditSales) {
+      toast.error('You do not have permission to add sales');
+      return;
+    }
+    
     setIsLoading(true);
     
     try {
@@ -263,6 +274,11 @@ export function AddSaleDialog({ onSaleAdded }) {
   const assignedCodeCount = formData.codes.filter(code => 
     credentialSaleStatus[code] && credentialSaleStatus[code].isAssigned
   ).length;
+
+  // Don't render the dialog if user doesn't have edit permissions
+  if (!canEditSales) {
+    return null;
+  }
 
   return (
     <Dialog open={isOpen} onOpenChange={(open) => {

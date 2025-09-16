@@ -2,7 +2,7 @@
 
 export default async function DeleteReseller(id) {
   try {
-    console.log('Deleting reseller:', id);
+    // console.log('Deleting reseller:', id);
 
     const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/delete-reseller`, {
       method: 'POST',
@@ -18,7 +18,7 @@ export default async function DeleteReseller(id) {
     const responseData = await response.json();
     
     if (responseData.success) {
-      console.log('Reseller deleted successfully:', id);
+      // console.log('Reseller deleted successfully:', id);
       return { 
         success: true, 
         message: responseData.message
@@ -40,7 +40,7 @@ export default async function DeleteReseller(id) {
 
 export async function BulkDeleteResellers(ids) {
   try {
-    console.log('Bulk deleting resellers:', ids);
+    // console.log('Bulk deleting resellers:', ids);
 
     const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/delete-reseller`, {
       method: 'POST',
@@ -56,7 +56,7 @@ export async function BulkDeleteResellers(ids) {
     const responseData = await response.json();
     
     if (responseData.success) {
-      console.log('Resellers bulk deleted successfully:', responseData.deletedCount);
+      // console.log('Resellers bulk deleted successfully:', responseData.deletedCount);
       return { 
         success: true, 
         message: responseData.message,
