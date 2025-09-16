@@ -1,24 +1,32 @@
-/*
-  Warnings:
+-- CreateTable
+CREATE TABLE `admin` (
+    `id` INTEGER NOT NULL AUTO_INCREMENT,
+    `user_name` VARCHAR(100) NOT NULL,
+    `password` VARCHAR(100) NOT NULL,
+    `email` VARCHAR(50) NOT NULL,
+    `sync` TINYINT NOT NULL,
+    `department` VARCHAR(50) NOT NULL,
+    `privilege` VARCHAR(50) NOT NULL,
+    `created_at` TIMESTAMP(0) NOT NULL DEFAULT CURRENT_TIMESTAMP(0),
+    `updated_at` TIMESTAMP(0) NOT NULL DEFAULT CURRENT_TIMESTAMP(0),
 
-  - You are about to drop the `logs` table. If the table is not empty, all the data it contains will be lost.
-  - You are about to drop the `master` table. If the table is not empty, all the data it contains will be lost.
-  - Added the required column `department` to the `admin` table without a default value. This is not possible if the table is not empty.
-  - Added the required column `privilege` to the `admin` table without a default value. This is not possible if the table is not empty.
+    UNIQUE INDEX `user_name`(`user_name`),
+    UNIQUE INDEX `email`(`email`),
+    PRIMARY KEY (`id`)
+) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
-*/
--- DropForeignKey
-ALTER TABLE `logs` DROP FOREIGN KEY `fk_adminID_admin`;
+-- CreateTable
+CREATE TABLE `session` (
+    `id` INTEGER NOT NULL AUTO_INCREMENT,
+    `userId` INTEGER NOT NULL,
+    `session_token` VARCHAR(100) NOT NULL,
+    `expires` DATETIME(0) NOT NULL,
+    `created_at` TIMESTAMP(0) NOT NULL DEFAULT CURRENT_TIMESTAMP(0),
+    `updated_at` TIMESTAMP(0) NOT NULL DEFAULT CURRENT_TIMESTAMP(0),
 
--- AlterTable
-ALTER TABLE `admin` ADD COLUMN `department` VARCHAR(50) NOT NULL,
-    ADD COLUMN `privilege` VARCHAR(50) NOT NULL;
-
--- DropTable
-DROP TABLE `logs`;
-
--- DropTable
-DROP TABLE `master`;
+    INDEX `userId`(`userId`),
+    PRIMARY KEY (`id`)
+) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
 -- CreateTable
 CREATE TABLE `credentials` (
@@ -36,7 +44,6 @@ CREATE TABLE `credentials` (
 
     INDEX `fk_pkg_id_with_pkg_id`(`pkg_id`),
     INDEX `user_id`(`user_id`),
-    INDEX `code_index`(`code`),
     PRIMARY KEY (`id`)
 ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
@@ -132,6 +139,27 @@ CREATE TABLE `settings` (
     PRIMARY KEY (`id`)
 ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
+-- CreateTable
+CREATE TABLE `logs` (
+    `id` INTEGER NOT NULL AUTO_INCREMENT,
+    `related_table` VARCHAR(100) NOT NULL,
+    `related_table_id` INTEGER NOT NULL,
+    `severity` INTEGER NOT NULL,
+    `message` VARCHAR(100) NOT NULL,
+    `admin_id` INTEGER NULL,
+    `action` VARCHAR(100) NOT NULL,
+    `status_code` INTEGER NOT NULL,
+    `additional_data` VARCHAR(100) NOT NULL,
+    `created_at` TIMESTAMP(0) NOT NULL DEFAULT CURRENT_TIMESTAMP(0),
+    `updated_at` TIMESTAMP(0) NOT NULL DEFAULT CURRENT_TIMESTAMP(0),
+
+    INDEX `fk_adminID_admin`(`admin_id`),
+    PRIMARY KEY (`id`)
+) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+
+-- AddForeignKey
+ALTER TABLE `session` ADD CONSTRAINT `fk_userId_admin_id` FOREIGN KEY (`userId`) REFERENCES `admin`(`id`) ON DELETE CASCADE ON UPDATE CASCADE;
+
 -- AddForeignKey
 ALTER TABLE `credentials` ADD CONSTRAINT `credentials_ibfk_1` FOREIGN KEY (`user_id`) REFERENCES `user`(`id`) ON DELETE SET NULL ON UPDATE CASCADE;
 
@@ -149,3 +177,6 @@ ALTER TABLE `sales` ADD CONSTRAINT `fk_reseller_id_with_reseller_id` FOREIGN KEY
 
 -- AddForeignKey
 ALTER TABLE `user` ADD CONSTRAINT `user_ibfk_1` FOREIGN KEY (`city`) REFERENCES `sri_lanka_districts_cities`(`id`) ON DELETE SET NULL ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE `logs` ADD CONSTRAINT `fk_adminID_admin` FOREIGN KEY (`admin_id`) REFERENCES `admin`(`id`) ON DELETE SET NULL ON UPDATE CASCADE;
