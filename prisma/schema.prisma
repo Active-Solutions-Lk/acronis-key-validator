@@ -18,6 +18,7 @@ model admin {
   privilege  String    @db.VarChar(50)
   created_at DateTime  @default(now()) @db.Timestamp(0)
   updated_at DateTime  @default(now()) @db.Timestamp(0)
+  logs       logs[]
   session    session[]
 }
 
@@ -51,7 +52,6 @@ model credentials {
 
   @@index([pkg_id], map: "fk_pkg_id_with_pkg_id")
   @@index([user_id], map: "user_id")
-  @@index([code], map: "code_index") // Add index for faster QR code lookups
 }
 
 model pkg {
@@ -138,4 +138,21 @@ model settings {
   password_min_length  String   @default("8") @db.VarChar(10)
   created_at           DateTime @default(now()) @db.Timestamp(0)
   updated_at           DateTime @default(now()) @db.Timestamp(0)
+}
+
+model logs {
+  id               Int      @id @default(autoincrement())
+  related_table    String   @db.VarChar(100)
+  related_table_id Int
+  severity         Int
+  message          String   @db.VarChar(100)
+  admin_id         Int?
+  action           String   @db.VarChar(100)
+  status_code      Int
+  additional_data  String   @db.VarChar(100)
+  created_at       DateTime @default(now()) @db.Timestamp(0)
+  updated_at       DateTime @default(now()) @db.Timestamp(0)
+  admin            admin?   @relation(fields: [admin_id], references: [id], map: "fk_adminID_admin")
+
+  @@index([admin_id], map: "fk_adminID_admin")
 }
