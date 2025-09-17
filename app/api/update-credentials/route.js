@@ -118,9 +118,16 @@ export async function POST(request) {
       // Find package if pkg name is provided
       let pkgId = existingCredentials.pkg_id
       if (pkg) {
-        const packageRecord = await prisma.pkg.findFirst({
-          where: { name: pkg }
-        })
+        // Get all packages for case-insensitive search
+        const allPackages = await prisma.pkg.findMany({
+          select: { id: true, name: true }
+        });
+        
+        // Find package with case-insensitive matching
+        const packageRecord = allPackages.find(p => 
+          p.name?.toLowerCase() === pkg.toLowerCase()
+        );
+        
         if (packageRecord) {
           pkgId = packageRecord.id
         }

@@ -339,7 +339,7 @@ function CredentialsPage () {
       if (result.success) {
         const newCredential = {
           id: result.credential.id,
-          email: result.credential.email,
+          email: result.credential.accMail || result.credential.email || result.credential.user?.email,
           password: result.credential.password,
           code: result.credential.code,
           quota: result.credential.quota,
@@ -348,7 +348,7 @@ function CredentialsPage () {
           created_at: result.credential.created_at,
           updated_at: result.credential.updated_at,
           pkg: {
-            name: result.credential.pkg.name
+            name: result.credential.package || result.credential.pkg?.name || 'Unknown'
           }
         }
 
@@ -381,6 +381,12 @@ function CredentialsPage () {
       return
     }
     
+    // Check if editingRow is valid
+    if (!editingRow || !editingRow.id) {
+      toast.error('No credential selected for editing')
+      return
+    }
+    
     try {
       if (!formData.email || !formData.password || !formData.pkg_id) {
         toast.error('Please fill in all required fields')
@@ -400,7 +406,7 @@ function CredentialsPage () {
       if (result.success) {
         const updatedCredential = {
           id: result.credential.id,
-          email: result.credential.email,
+          email: result.credential.accMail || result.credential.email,
           password: result.credential.password,
           code: result.credential.code,
           quota: result.credential.quota,
@@ -409,12 +415,12 @@ function CredentialsPage () {
           created_at: result.credential.created_at,
           updated_at: result.credential.updated_at,
           pkg: {
-            name: result.credential.pkg.name
+            name: result.credential.package || result.credential.pkg?.name || 'Unknown'
           }
         }
 
         const updatedData = data.map(item =>
-          item.id === editingRow.id ? updatedCredential : item
+          item.id === editingRow?.id ? updatedCredential : item
         )
 
         setData(updatedData)
@@ -453,7 +459,7 @@ function CredentialsPage () {
       if (result.success) {
         const newCredential = {
           id: result.credential.id,
-          email: result.credential.email,
+          email: result.credential.accMail || result.credential.email || result.credential.user?.email,
           password: result.credential.password,
           code: result.credential.code,
           quota: result.credential.quota,
@@ -461,7 +467,7 @@ function CredentialsPage () {
           created_at: result.credential.created_at,
           updated_at: result.credential.updated_at,
           pkg: {
-            name: result.credential.pkg?.name || 'Unknown'
+            name: result.credential.package || result.credential.pkg?.name || 'Unknown'
           }
         }
 

@@ -89,38 +89,26 @@ export async function POST(request) {
       const cleanPackageName = pkg_id.toString().trim().replace(/\r\n|\r|\n/g, '');
       // console.log('Looking for package by name:', cleanPackageName);
       
-      // First try exact match
-      packageRecord = await prisma.pkg.findFirst({
-        where: { 
-          name: {
-            equals: cleanPackageName,
-            mode: 'insensitive'
-          }
-        }
+      // Get all packages for case-insensitive search
+      const allPackages = await prisma.pkg.findMany({
+        select: { id: true, name: true }
       });
       
+      // console.log('All packages:', allPackages);
+      
+      packageRecord = allPackages.find(pkg => 
+        pkg.name?.toLowerCase() === cleanPackageName.toLowerCase()
+      );
+      
       if (!packageRecord) {
-        // Get all packages for case-insensitive search
-        const allPackages = await prisma.pkg.findMany({
-          select: { id: true, name: true }
-        });
-        
-        // console.log('All packages:', allPackages);
-        
+        // Try case-insensitive partial match
         packageRecord = allPackages.find(pkg => 
-          pkg.name?.toLowerCase() === cleanPackageName.toLowerCase()
+          pkg.name?.toLowerCase().includes(cleanPackageName.toLowerCase()) ||
+          cleanPackageName.toLowerCase().includes(pkg.name?.toLowerCase())
         );
-        
-        if (!packageRecord) {
-          // Try case-insensitive partial match
-          packageRecord = allPackages.find(pkg => 
-            pkg.name?.toLowerCase().includes(cleanPackageName.toLowerCase()) ||
-            cleanPackageName.toLowerCase().includes(pkg.name?.toLowerCase())
-          );
-        }
-        
-        // console.log('Package found by case-insensitive search:', packageRecord?.name);
       }
+      
+      // console.log('Package found by case-insensitive search:', packageRecord?.name);
     }
 
     if (!packageRecord) {

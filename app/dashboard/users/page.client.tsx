@@ -273,7 +273,7 @@ function UsersPageClient() {
   }
   
   const handleUpdateData = useCallback(async () => {
-    if (!editingRow) return
+    if (!editingRow || !editingRow.id) return
     setLoading(true)
     try {
       const response = await UpdateUser(editingRow.id, editingRow)

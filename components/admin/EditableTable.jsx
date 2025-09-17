@@ -127,7 +127,7 @@ function EditableTable({
   }
 
   const handleUpdateData = () => {
-    if (!editingRow) return
+    if (!editingRow || !editingRow.id) return
     setData((prevData) =>
       prevData.map((item) =>
         item.id === editingRow.id

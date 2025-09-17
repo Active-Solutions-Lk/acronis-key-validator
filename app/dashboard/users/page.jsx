@@ -190,7 +190,7 @@ export default function UsersPage() {
   const handleRowDoubleClick = (row) => { setEditingRow({ ...row }); setIsEditDialogOpen(true) }
   
   const handleUpdateData = useCallback(async () => {
-    if (!editingRow) return
+    if (!editingRow || !editingRow.id) return
     setLoading(true)
     try {
       const response = await UpdateUser(editingRow.id, editingRow)

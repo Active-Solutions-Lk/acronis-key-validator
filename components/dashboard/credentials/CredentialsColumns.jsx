@@ -203,7 +203,7 @@ export function useCredentialsColumns({
         </Button>
       ),
       cell: ({ row }) => {
-        const packageName = row.original.pkg.name
+        const packageName = row.original.pkg?.name || "Unknown"
         return (
           <Badge variant="secondary" className="font-medium">
             {packageName}
@@ -261,7 +261,7 @@ export function useCredentialsColumns({
             className="cursor-pointer hover:bg-gray-50 p-1 rounded text-right"
             onClick={() => canEditCredentials && startInlineEdit(row.original.id, "quota", quota)}
           >
-            {quota ? quota.toLocaleString() : "—"}
+            {quota && typeof quota === 'number' ? quota.toLocaleString() : "—"}
           </div>
         )
       },
@@ -328,7 +328,11 @@ export function useCredentialsColumns({
         </Button>
       ),
       cell: ({ row }) => {
-        const date = new Date(row.getValue("created_at"))
+        const dateValue = row.getValue("created_at")
+        if (!dateValue) {
+          return <div className="text-sm text-gray-600">—</div>
+        }
+        const date = new Date(dateValue)
         return (
           <div className="text-sm text-gray-600">
             {date.toLocaleDateString()}
@@ -370,7 +374,7 @@ export function useCredentialsColumns({
                     setFormData({
                       email: credential.email,
                       password: credential.password,
-                      pkg_id: credential.pkg_id.toString(),
+                      pkg_id: credential.pkg_id?.toString() || "",
                       quota: credential.quota?.toString() || "",
                       code: credential.code || ""
                     })
