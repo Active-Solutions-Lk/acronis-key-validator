@@ -5,9 +5,21 @@ import ValidateUser from '@/app/actions/validateUser'
 import { logout as serverLogout } from '@/app/actions/logout'
 import { checkAuth } from '@/app/actions/checkAuth'
 
+// Define the Admin type based on the database schema
+interface Admin {
+  id: number;
+  user_name: string;
+  email: string;
+  sync: number;
+  department: string;
+  privilege: string;
+  created_at: Date;
+  updated_at: Date;
+}
+
 interface AuthContextType {
-  isAuthenticated: boolean
-  login: (username: string, password: string) => Promise<{ success: boolean; message?: string; user?: any }>
+  isAuthenticated: boolean;
+  login: (username: string, password: string) => Promise<{ success: boolean; message?: string; user?: Admin }>
   logout: () => Promise<void>
   loading: boolean
   authChecked: boolean
@@ -26,8 +38,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       try {
         const { isAuthenticated: authStatus } = await checkAuth()
         setIsAuthenticated(authStatus)
-      } catch (error) {
-        console.error('Error checking authentication:', error)
+      } catch (_error) {
+        console.error('Error checking authentication:', _error)
         setIsAuthenticated(false)
       } finally {
         setAuthChecked(true)
@@ -63,6 +75,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         return { success: false, message: result?.message || 'Invalid username or password' }
       }
     } catch (error) {
+      console.log('Error during authentication:', error)
       return { success: false, message: 'An error occurred during authentication' }
     } finally {
       setLoading(false)
@@ -76,8 +89,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       // Clear localStorage items
       localStorage.removeItem('isAuthenticated')
       localStorage.removeItem('currentUser')
-    } catch (error) {
-      console.error('Error during logout:', error)
+    } catch (_error) {
+      console.error('Error during logout:', _error)
       // Even if server logout fails, clear client state
       setIsAuthenticated(false)
       localStorage.removeItem('isAuthenticated')

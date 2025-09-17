@@ -3,7 +3,19 @@
 import { useState, useEffect, useCallback } from 'react'
 import { Card, CardContent } from '@/components/ui/card'
 import { toast } from 'sonner'
-import { flexRender, getCoreRowModel, useReactTable, getSortedRowModel, getFilteredRowModel, getPaginationRowModel } from '@tanstack/react-table'
+import {
+  flexRender,
+  getCoreRowModel,
+  useReactTable,
+  getSortedRowModel,
+  getFilteredRowModel,
+  getPaginationRowModel,
+  ColumnDef,
+  SortingState,
+  // ColumnSort,
+  Row,
+  Table as ReactTable
+} from '@tanstack/react-table'
 import { Search, MoreHorizontal, Trash2, Edit, Plus } from 'lucide-react'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Button } from '@/components/ui/button'
@@ -18,27 +30,57 @@ import UpdateUser from '../../actions/updateUser'
 import CreateUser from '../../actions/createUser'
 import DeleteUser, { BulkDeleteUsers } from '../../actions/deleteUser'
 
-const Table = ({ children, ...props }) => <table className='w-full caption-bottom text-sm' {...props}>{children}</table>
-const TableHeader = ({ children, ...props }) => <thead className='[&_tr]:border-b' {...props}>{children}</thead>
-const TableBody = ({ children, ...props }) => <tbody className='[&_tr:last-child]:border-0' {...props}>{children}</tbody>
-const TableRow = ({ children, className = '', ...props }) => <tr className={`border-b transition-colors hover:bg-muted/50 ${className}`} {...props}>{children}</tr>
-const TableHead = ({ children, className = '', ...props }) => <th className={`h-12 px-2 text-left align-middle font-medium text-muted-foreground ${className}`} {...props}>{children}</th>
-const TableCell = ({ children, className = '', ...props }) => <td className={`p-2 align-middle ${className}`} {...props}>{children}</td>
-const Input = ({ className = '', ...props }) => <input className={`flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ${className}`} {...props} />
+// Define TypeScript interfaces for our data structures
+interface City {
+  id: number
+  district: string
+  city: string
+}
+
+interface User {
+  id: number
+  name: string
+  email: string
+  company: string | null
+  tel: number
+  address: string | null
+  city: number | null
+  created_at: string
+  updated_at: string
+  sri_lanka_districts_cities: City | null
+}
+
+// Define types for our form data
+interface AddFormData {
+  name: string
+  email: string
+  company: string
+  tel: string
+  address: string
+  city: string
+}
+
+const Table = ({ children, ...props }: { children: React.ReactNode } & React.HTMLAttributes<HTMLTableElement>) => <table className='w-full caption-bottom text-sm' {...props}>{children}</table>
+const TableHeader = ({ children, ...props }: { children: React.ReactNode } & React.HTMLAttributes<HTMLTableSectionElement>) => <thead className='[&_tr]:border-b' {...props}>{children}</thead>
+const TableBody = ({ children, ...props }: { children: React.ReactNode } & React.HTMLAttributes<HTMLTableSectionElement>) => <tbody className='[&_tr:last-child]:border-0' {...props}>{children}</tbody>
+const TableRow = ({ children, className = '', ...props }: { children: React.ReactNode; className?: string } & React.HTMLAttributes<HTMLTableRowElement>) => <tr className={`border-b transition-colors hover:bg-muted/50 ${className}`} {...props}>{children}</tr>
+const TableHead = ({ children, className = '', ...props }: { children: React.ReactNode; className?: string } & React.ThHTMLAttributes<HTMLTableCellElement>) => <th className={`h-12 px-2 text-left align-middle font-medium text-muted-foreground ${className}`} {...props}>{children}</th>
+const TableCell = ({ children, className = '', ...props }: { children: React.ReactNode; className?: string } & React.TdHTMLAttributes<HTMLTableCellElement>) => <td className={`p-2 align-middle ${className}`} {...props}>{children}</td>
+const Input = ({ className = '', ...props }: { className?: string } & React.InputHTMLAttributes<HTMLInputElement>) => <input className={`flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ${className}`} {...props} />
 
 function UsersPageClient() {
   const [message, setMessage] = useState('')
-  const [data, setData] = useState([])
-  const [cities, setCities] = useState([])
+  const [data, setData] = useState<User[]>([])
+  const [cities, setCities] = useState<City[]>([])
   const [loading, setLoading] = useState(false)
   const [initialLoading, setInitialLoading] = useState(true)
-  const [sorting, setSorting] = useState([])
+  const [sorting, setSorting] = useState<SortingState>([])
   const [globalFilter, setGlobalFilter] = useState('')
-  const [rowSelection, setRowSelection] = useState({})
+  const [rowSelection, setRowSelection] = useState<Record<string, boolean>>({})
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false)
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false)
-  const [editingRow, setEditingRow] = useState(null)
-  const [addFormData, setAddFormData] = useState({
+  const [editingRow, setEditingRow] = useState<User | null>(null)
+  const [addFormData, setAddFormData] = useState<AddFormData>({
     name: '',
     email: '',
     company: '',
@@ -48,7 +90,7 @@ function UsersPageClient() {
   })
 
   // Delete handlers
-  const handleDeleteUser = useCallback(async (id) => {
+  const handleDeleteUser = useCallback(async (id: number) => {
     try {
       const response = await DeleteUser(id)
       if (response.success) {
@@ -63,11 +105,11 @@ function UsersPageClient() {
     }
   }, [])
 
-  // Define columns inside the component so they have access to state and handlers
-  const columns = [
+  // Define columns with proper typing
+  const columns: ColumnDef<User>[] = [
     {
       id: 'select',
-      header: ({ table }) => (
+      header: ({ table }: { table: ReactTable<User> }) => (
         <Checkbox
           checked={
             table.getIsAllPageRowsSelected() ||
@@ -77,7 +119,7 @@ function UsersPageClient() {
           aria-label="Select all"
         />
       ),
-      cell: ({ row }) => (
+      cell: ({ row }: { row: Row<User> }) => (
         <Checkbox
           checked={row.getIsSelected()}
           onCheckedChange={(value) => row.toggleSelected(!!value)}
@@ -87,25 +129,48 @@ function UsersPageClient() {
       enableSorting: false,
       enableHiding: false,
     },
-    { accessorKey: 'id', header: 'ID', cell: ({ row }) => <div className='w-12'>{row.getValue('id')}</div>, enableSorting: true },
-    { accessorKey: 'name', header: 'Name', cell: ({ row }) => <div className='min-w-[150px] font-medium'>{row.getValue('name')}</div>, enableSorting: true },
-    { accessorKey: 'email', header: 'Email', cell: ({ row }) => <div className='min-w-[150px]'>{row.getValue('email')}</div>, enableSorting: true },
-    { accessorKey: 'company', header: 'Company', cell: ({ row }) => <div className='min-w-[120px]'>{row.getValue('company') || '-'}</div> },
+    { 
+      accessorKey: 'id', 
+      header: 'ID', 
+      cell: ({ row }: { row: Row<User> }) => <div className='w-12'>{row.getValue('id')}</div>, 
+      enableSorting: true 
+    },
+    { 
+      accessorKey: 'name', 
+      header: 'Name', 
+      cell: ({ row }: { row: Row<User> }) => <div className='min-w-[150px] font-medium'>{row.getValue('name')}</div>, 
+      enableSorting: true 
+    },
+    { 
+      accessorKey: 'email', 
+      header: 'Email', 
+      cell: ({ row }: { row: Row<User> }) => <div className='min-w-[150px]'>{row.getValue('email')}</div>, 
+      enableSorting: true 
+    },
+    { 
+      accessorKey: 'company', 
+      header: 'Company', 
+      cell: ({ row }: { row: Row<User> }) => <div className='min-w-[120px]'>{row.getValue('company') || '-'}</div> 
+    },
     { 
       accessorKey: 'city', 
       header: 'City', 
-      cell: ({ row }) => {
+      cell: ({ row }: { row: Row<User> }) => {
         const cityData = row.original.sri_lanka_districts_cities
         return <div className='min-w-[100px]'>{cityData ? `${cityData.city}, ${cityData.district}` : '-'}</div>
       }, 
       enableSorting: true 
     },
-    { accessorKey: 'tel', header: 'Phone', cell: ({ row }) => <div className='min-w-[100px]'>{row.getValue('tel') || '-'}</div> },
-    // { accessorKey: 'address', header: 'Address', cell: ({ row }) => <div className='min-w-[150px]'>{row.getValue('address') || '-'}</div> },
+    { 
+      accessorKey: 'tel', 
+      header: 'Phone', 
+      cell: ({ row }: { row: Row<User> }) => <div className='min-w-[100px]'>{row.getValue('tel') || '-'}</div> 
+    },
+    // { accessorKey: 'address', header: 'Address', cell: ({ row }: { row: Row<User> }) => <div className='min-w-[150px]'>{row.getValue('address') || '-'}</div> },
     {
       id: 'actions',
       enableHiding: false,
-      cell: ({ row }) => {
+      cell: ({ row }: { row: Row<User> }) => {
         const user = row.original
         return (
           <DropdownMenu>
@@ -140,11 +205,26 @@ function UsersPageClient() {
   ]
 
   const table = useReactTable({
-    data, columns, onSortingChange: setSorting, getCoreRowModel: getCoreRowModel(), getSortedRowModel: getSortedRowModel(),
-    getFilteredRowModel: getFilteredRowModel(), getPaginationRowModel: getPaginationRowModel(), onGlobalFilterChange: setGlobalFilter,
-    globalFilterFn: 'includesString', state: { sorting, globalFilter, rowSelection }, 
-    enableRowSelection: true, onRowSelectionChange: setRowSelection,
-    initialState: { pagination: { pageSize: 10 }, sorting: [{ id: 'id', asc: true }] }
+    data,
+    columns,
+    onSortingChange: setSorting,
+    getCoreRowModel: getCoreRowModel(),
+    getSortedRowModel: getSortedRowModel(),
+    getFilteredRowModel: getFilteredRowModel(),
+    getPaginationRowModel: getPaginationRowModel(),
+    onGlobalFilterChange: setGlobalFilter,
+    globalFilterFn: 'includesString',
+    state: {
+      sorting,
+      globalFilter,
+      rowSelection
+    },
+    enableRowSelection: true,
+    onRowSelectionChange: setRowSelection,
+    initialState: {
+      pagination: { pageSize: 10 },
+      sorting: [{ id: 'id', desc: false }]
+    }
   })
 
   useEffect(() => {
@@ -157,7 +237,7 @@ function UsersPageClient() {
         ])
         
         if (userResponse.success) {
-          setData(userResponse.users)
+          setData(userResponse.users || [])
         } else {
           setMessage(userResponse.error || 'Failed to fetch user data.')
           toast.error(userResponse.error || 'Failed to fetch user data.')
@@ -165,9 +245,9 @@ function UsersPageClient() {
         
         if (citiesResponse.success) {
           // Transform cities data for the combobox component
-          const transformedCities = citiesResponse.cities?.map(city => ({
+          const transformedCities = citiesResponse.cities?.map((city: City) => ({
             value: city.id,
-            label: `${city.city}`,
+            label: `${city.city}, ${city.district}`,
             id: city.id,
             name: `${city.city}`
           })) || []
@@ -187,7 +267,10 @@ function UsersPageClient() {
     fetchData()
   }, [])
 
-  const handleRowDoubleClick = (row) => { setEditingRow({ ...row }); setIsEditDialogOpen(true) }
+  const handleRowDoubleClick = (row: User) => {
+    setEditingRow({ ...row })
+    setIsEditDialogOpen(true)
+  }
   
   const handleUpdateData = useCallback(async () => {
     if (!editingRow) return
@@ -210,24 +293,34 @@ function UsersPageClient() {
     }
   }, [editingRow])
 
-  const handleInputChange = (field, value) => { if (editingRow) setEditingRow(prev => ({ ...prev, [field]: value })) }
+  const handleInputChange = (field: keyof User, value: string | number | boolean | City | null) => {
+    if (editingRow) setEditingRow(prev => {
+      if (!prev) return null;
+      return { ...prev, [field]: value };
+    })
+  }
 
   const handleBulkDelete = useCallback(async () => {
-    const selectedIds = Object.keys(rowSelection).map(index => data[parseInt(index)].id)
+    const selectedIds = Object.keys(rowSelection)
+      .map(index => {
+        const rowIndex = parseInt(index);
+        return data[rowIndex]?.id;
+      })
+      .filter((id): id is number => id !== undefined);
     try {
-      const response = await BulkDeleteUsers(selectedIds)
+      const response = await BulkDeleteUsers(selectedIds);
       if (response.success) {
-        toast.success(response.message || `${response.deletedCount} user(s) deleted successfully`)
-        setData(prevData => prevData.filter(item => !selectedIds.includes(item.id)))
-        setRowSelection({})
+        toast.success(response.message || `${response.deletedCount} user(s) deleted successfully`);
+        setData(prevData => prevData.filter(item => !selectedIds.includes(item.id)));
+        setRowSelection({});
       } else {
-        toast.error(response.error || 'Failed to delete users')
+        toast.error(response.error || 'Failed to delete users');
       }
     } catch (error) {
-      console.error('Bulk delete error:', error)
-      toast.error('Failed to delete users. Please try again.')
+      console.error('Bulk delete error:', error);
+      toast.error('Failed to delete users. Please try again.');
     }
-  }, [rowSelection, data])
+  }, [rowSelection, data]);
 
   // Add user handler
   const handleAddUser = useCallback(async () => {
@@ -284,7 +377,12 @@ function UsersPageClient() {
             <div className="flex items-center justify-between mb-4">
               <div className="relative flex-1 max-w-sm">
                 <Search className="absolute left-2 top-3 h-4 w-4 text-muted-foreground" />
-                <Input placeholder="Search users..." value={globalFilter ?? ''} onChange={(e) => setGlobalFilter(String(e.target.value))} className="pl-8" />
+                <Input 
+                  placeholder="Search users..." 
+                  value={globalFilter ?? ''} 
+                  onChange={(e) => setGlobalFilter(String(e.target.value))} 
+                  className="pl-8" 
+                />
               </div>
               <div className="flex items-center space-x-2">
                 <Button onClick={() => setIsAddDialogOpen(true)}>
@@ -297,7 +395,9 @@ function UsersPageClient() {
                     Delete Selected ({Object.keys(rowSelection).length})
                   </Button>
                 )}
-                <div className="text-sm text-muted-foreground">{table.getFilteredRowModel().rows.length} of {table.getCoreRowModel().rows.length} row(s)</div>
+                <div className="text-sm text-muted-foreground">
+                  {table.getFilteredRowModel().rows.length} of {table.getCoreRowModel().rows.length} row(s)
+                </div>
               </div>
             </div>
             
@@ -311,7 +411,10 @@ function UsersPageClient() {
                           {header.isPlaceholder ? null : (
                             <div className="flex items-center">
                               {flexRender(header.column.columnDef.header, header.getContext())}
-                              {{ asc: ' 🔼', desc: ' 🔽' }[header.column.getIsSorted()] ?? null}
+                              {{
+                                asc: ' 🔼',
+                                desc: ' 🔽'
+                              }[header.column.getIsSorted() as string] ?? null}
                             </div>
                           )}
                         </TableHead>
@@ -322,14 +425,24 @@ function UsersPageClient() {
                 <TableBody>
                   {table.getRowModel().rows?.length ? (
                     table.getRowModel().rows.map((row) => (
-                      <TableRow key={row.id} className="cursor-pointer hover:bg-white" onDoubleClick={() => handleRowDoubleClick(row.original)}>
+                      <TableRow 
+                        key={row.id} 
+                        className="cursor-pointer hover:bg-white" 
+                        onDoubleClick={() => handleRowDoubleClick(row.original)}
+                      >
                         {row.getVisibleCells().map((cell) => (
-                          <TableCell key={cell.id}>{flexRender(cell.column.columnDef.cell, cell.getContext())}</TableCell>
+                          <TableCell key={cell.id}>
+                            {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                          </TableCell>
                         ))}
                       </TableRow>
                     ))
                   ) : (
-                    <TableRow><TableCell colSpan={columns.length} className="h-24 text-center">No results found.</TableCell></TableRow>
+                    <TableRow>
+                      <TableCell colSpan={columns.length} className="h-24 text-center">
+                        No results found.
+                      </TableCell>
+                    </TableRow>
                   )}
                 </TableBody>
               </Table>

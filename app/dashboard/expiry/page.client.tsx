@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useMemo, useCallback } from 'react'
+import React, { useState, useEffect, useMemo, useCallback } from 'react'
 import { Card, CardContent } from '@/components/ui/card'
 import { toast } from 'sonner'
 import EditableTable from '@/components/admin/EditableTable'
@@ -11,7 +11,66 @@ import AllPackages from '../../actions/allPackages'
 import AllResellers from '../../actions/allResellers'
 import AllCredentials from '../../actions/allCredentials'
 
-const columns = [
+// Define TypeScript interfaces for our data
+interface Package {
+  id: number;
+  name: string;
+  duration: string;
+  created_at: string;
+  updated_at: string;
+}
+
+interface Reseller {
+  customer_id: number;
+  company_name: string;
+  address: string;
+  type: string;
+  credit_limit: string;
+  payment_terms: string;
+  note: string;
+  vat: string;
+  city: number;
+  created_at: string;
+  updated_at: string;
+}
+
+interface Credential {
+  id: number;
+  pkg_id: number;
+  email: string;
+  password: string;
+  quota: number | null;
+  code: string | null;
+  user_id: number | null;
+  actDate: string | null;
+  endDate: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+interface ExpiredCredential {
+  id: number;
+  reseller: string | null;
+  customer: string | null;
+  actDate: string | null;
+  endDate: string | null;
+  accMail: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+// Define a generic type for the row data
+type RowData = Record<string, unknown>;
+
+// Define column type for React Table
+interface ColumnDef<T> {
+  accessorKey: keyof T;
+  header: string;
+  cell: ({ row }: { row: { getValue: <K extends keyof T>(key: K) => T[K] } }) => React.ReactNode;
+  enableSorting?: boolean;
+}
+
+const columns: ColumnDef<ExpiredCredential>[] = [
   {
     accessorKey: 'id',
     header: 'ID',
@@ -61,11 +120,12 @@ const columns = [
 
 function ExpiryPageClient () {
   const [message, setMessage] = useState('')
-  const [credentialsData, setCredentialsData] = useState([])
-  const [expList, setExpList] = useState([])
-  const [packages, setPackages] = useState([])
-  const [resellers, setResellers] = useState([])
-  const [credentials, setCredentials] = useState([])
+  const [_credentialsData, setCredentialsData] = useState<RowData[]>([])
+  console.log('_credentialsData', _credentialsData)
+  const [expList, setExpList] = useState<ExpiredCredential[]>([])
+  const [packages, setPackages] = useState<Package[]>([])
+  const [resellers, setResellers] = useState<Reseller[]>([])
+  const [credentials, setCredentials] = useState<Credential[]>([])
   const [credentialsLoading, setCredentialsLoading] = useState(false)
   const [initialLoading, setInitialLoading] = useState(true)
 
@@ -163,7 +223,7 @@ function ExpiryPageClient () {
   }, [])
 
   // Optimized callback with useCallback to prevent unnecessary re-renders
-  const handleUpdateData = useCallback(async (updatedRow) => {
+  const handleUpdateData = useCallback(async (updatedRow: ExpiredCredential) => {
     setCredentialsLoading(true)
     try {
       const response = await updateCredentials(updatedRow)
@@ -188,11 +248,11 @@ function ExpiryPageClient () {
   }, [])
 
   // Memoized function to prevent unnecessary re-computations
-  const getRowHighlightClass = useCallback((row) => {
+  const getRowHighlightClass = useCallback((row: ExpiredCredential) => {
     if (row && row.endDate) {
       const endDate = new Date(row.endDate)
       const today = new Date()
-      const diffInDays = Math.ceil((endDate - today) / (1000 * 60 * 60 * 24))
+      const diffInDays = Math.ceil((endDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24))
 
       if (diffInDays <= 0) {
         return 'bg-red-300' // Expired: Red background

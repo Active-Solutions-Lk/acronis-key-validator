@@ -1,6 +1,4 @@
-import { PrismaClient } from '@prisma/client';
-
-const prisma = new PrismaClient();
+import prisma from '@/lib/prisma';
 
 export async function GET() {
   try {
@@ -26,8 +24,8 @@ export async function GET() {
       }),
       { status: 200, headers: { 'Content-Type': 'application/json' } }
     );
-  } catch (error) {
-    // console.log('Error querying with department/privilege:', error.message);
+  } catch (_error) {
+    console.log('Error querying with department/privilege:', _error)
     
     // Try to query without department and privilege
     try {

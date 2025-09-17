@@ -7,7 +7,7 @@ import { syncData } from '../../actions/syncData'
 
 function SyncPageClient () {
   const [isLoading, setIsLoading] = useState(false)
-  const [lastSync, setLastSync] = useState(null)
+  const [lastSync, setLastSync] = useState<Date | null>(null)
   const [syncStatus, setSyncStatus] = useState('idle') // idle, success, error
   const [syncMessage, setSyncMessage] = useState('')
   // Calculate next scheduled sync time
@@ -20,7 +20,7 @@ function SyncPageClient () {
   }
 
   // Format time for display
-  const formatTime = date => {
+  const formatTime = (date: Date) => {
     return date.toLocaleString('en-US', {
       month: 'short',
       day: 'numeric',
@@ -48,10 +48,10 @@ function SyncPageClient () {
           response.error || response.details || 'Failed to sync emails'
         )
       }
-    } catch (error) {
+    } catch (_error) {
       setSyncStatus('error')
       setSyncMessage('Error syncing emails')
-    ///  console.log('Error fetching master data:', error)
+      console.log('Error fetching master data:', _error)
     } finally {
       setIsLoading(false)
     }
@@ -59,26 +59,26 @@ function SyncPageClient () {
   // Manual sync button handler
   const handleManualSync = () => {
     performSync()
-    // startCronJob()
+    // _startCronJob()
   }
 
 
   // Trigger server-side cron job (for testing)
-  const startCronJob = async () => {
-    try {
-      const response = await fetch('/api/run-sync', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-      });
-      const result = await response.json();
-      setSyncMessage(result.message);
-      setSyncStatus(response.ok ? 'success' : 'error');
-    } catch (error) {
-      setSyncStatus('error');
-      setSyncMessage('Failed to start cron job');
-      console.error('Error starting cron job:', error);
-    }
-  };
+  // const _startCronJob = async () => {
+  //   try {
+  //     const response = await fetch('/api/run-sync', {
+  //       method: 'POST',
+  //       headers: { 'Content-Type': 'application/json' },
+  //     });
+  //     const result = await response.json();
+  //     setSyncMessage(result.message);
+  //     setSyncStatus(response.ok ? 'success' : 'error');
+  //   } catch (error) {
+  //     setSyncStatus('error');
+  //     setSyncMessage('Failed to start cron job');
+  //     console.error('Error starting cron job:', error);
+  //   }
+  // };
 
   // Set up daily sync at 12:00 AM
   useEffect(() => {

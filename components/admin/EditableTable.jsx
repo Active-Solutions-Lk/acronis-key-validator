@@ -66,6 +66,7 @@ const TableCell = ({ children, className = '', ...props }) => (
     {children}
   </td>
 )
+
 const Input = ({ className = '', type = 'text', ...props }) => (
   <input
     type={type}

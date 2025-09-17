@@ -11,11 +11,72 @@ import { RefreshCw } from 'lucide-react';
 import AllSales from '@/app/actions/allSales';
 import UpdateSale from '@/app/actions/updateSale';
 
+// Define the types based on the database schema and API response
+interface City {
+  id: number;
+  district: string;
+  city: string;
+}
+
+interface User {
+  id: number;
+  name: string;
+  email: string;
+  company: string;
+  tel: number;
+  address: string;
+  city: number;
+  created_at: string;
+  updated_at: string;
+  sri_lanka_districts_cities?: City;
+}
+
+interface Package {
+  id: number;
+  name: string;
+}
+
+interface Credential {
+  id: number;
+  email: string;
+  password: string;
+  code: string;
+  quota: number;
+  pkg: Package;
+  user: User;
+  created_at: string;
+}
+
+interface Reseller {
+  customer_id: number;
+  company_name: string;
+  address: string;
+  type: string;
+  credit_limit: string;
+  payment_terms: string;
+  note: string;
+  vat: string;
+  city: number;
+  created_at: string;
+  updated_at: string;
+  sri_lanka_districts_cities?: City;
+}
+
+interface Sale {
+  id: number;
+  reseller_id: number;
+  credentials_id: number;
+  created_at: string;
+  updated_at: string;
+  reseller: Reseller;
+  credentials: Credential;
+}
+
 function SalesPageClient() {
-  const [sales, setSales] = useState([]);
+  const [sales, setSales] = useState<Sale[]>([]);
   const [loading, setLoading] = useState(true);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
-  const [editingSale, setEditingSale] = useState(null);
+  const [editingSale, setEditingSale] = useState<Sale | null>(null);
   const [isRefreshing, setIsRefreshing] = useState(false);
 
   const fetchSales = async () => {
@@ -63,12 +124,12 @@ function SalesPageClient() {
     fetchSales();
   };
 
-  const handleEditSale = (sale) => {
+  const handleEditSale = (sale: Sale) => {
     setEditingSale(sale);
     setIsEditDialogOpen(true);
   };
 
-  const handleUpdateSale = async (id, saleData) => {
+  const handleUpdateSale = async (id: number, saleData: { reseller_id: string; credentials_id: string }) => {
     try {
       const result = await UpdateSale(id, saleData);
       if (result.success) {

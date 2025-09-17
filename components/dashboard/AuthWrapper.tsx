@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react'
 import LoginDialog from '@/components/admin/LoginDialog'
 import ValidateUser from '@/app/actions/validateUser'
-import { useRouter } from 'next/navigation'
+// import { useRouter } from 'next/navigation'
 import { checkAuth } from '@/app/actions/checkAuth'
 
 export default function AuthWrapper({ children }: { children: React.ReactNode }) {
@@ -13,7 +13,7 @@ export default function AuthWrapper({ children }: { children: React.ReactNode })
   const [message, setMessage] = useState('')
   const [loading, setLoading] = useState(false)
   const [authChecked, setAuthChecked] = useState(false)
-  const router = useRouter()
+  // const _router = useRouter()
 
   // Check if user is already authenticated
   useEffect(() => {
@@ -41,8 +41,8 @@ export default function AuthWrapper({ children }: { children: React.ReactNode })
         const { isAuthenticated } = await checkAuth()
        // console.log('Server auth check (no localStorage):', isAuthenticated)
         setShowAlert(!isAuthenticated)
-      } catch (error) {
-        console.error('Error checking authentication:', error)
+      } catch (_error) {
+        console.error('Error checking authentication:', _error)
         setShowAlert(true)
       } finally {
         setAuthChecked(true)
@@ -81,8 +81,8 @@ export default function AuthWrapper({ children }: { children: React.ReactNode })
         setLoading(false)
         setMessage(response?.message || 'Validation failed')
       }
-    } catch (error) {
-    //  console.log('Error validating user:', error)
+    } catch (_error) {
+     console.log('Error validating user:', _error)
       setLoading(false)
       setMessage('Error validating credentials')
     }
@@ -100,6 +100,7 @@ export default function AuthWrapper({ children }: { children: React.ReactNode })
  // console.log('Rendering AuthWrapper, showAlert:', showAlert)
   return (
     <>
+
       {showAlert && (
         <LoginDialog
           showAlert={showAlert}

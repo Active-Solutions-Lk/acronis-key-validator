@@ -9,22 +9,22 @@ import {
   CardTitle
 } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
-import { Textarea } from '@/components/ui/textarea'
-import { Switch } from '@/components/ui/switch'
+// import { Input } from '@/components/ui/input'
+// import { Label } from '@/components/ui/label'
+// import { Textarea } from '@/components/ui/textarea'
+// import { Switch } from '@/components/ui/switch'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
-import {
-  IconSettings,
-  IconUser,
-  IconMail,
-  IconBell,
-  IconShield,
-  IconDatabase
-} from '@tabler/icons-react'
+// import {
+//   IconSettings,
+//   IconUser,
+//   IconMail,
+//   IconBell,
+//   IconShield,
+//   IconDatabase
+// } from '@tabler/icons-react'
 import { toast } from 'sonner'
-import { fetchSettings } from '@/app/actions/fetchSettings'
-import { updateSettings } from '@/app/actions/updateSettings'
+// import { fetchSettings } from '@/app/actions/fetchSettings'
+// import { updateSettings } from '@/app/actions/updateSettings'
 import { EditAdminDialog } from '@/components/admin/EditAdminDialog'
 import AllAdmins from '@/app/actions/allAdmins'
 import { deleteAdmin } from '@/app/actions/deleteAdmin'
@@ -44,35 +44,37 @@ type Admin = {
 }
 
 export function SettingsPageClient () {
-  const [activeTab, setActiveTab] = useState('general')
+  // const [_activeTab, _setActiveTab] = useState('general')
   const [loading, setLoading] = useState(true)
 
   // Permission hooks
-  const { user, canView, canEdit, canDelete, isSuperAdmin } = usePermissions()
+  const { 
+    user, canView, canEdit
+   } = usePermissions()
 
   // General settings state
-  const [siteName, setSiteName] = useState('Acronis Key Validator')
-  const [siteDescription, setSiteDescription] = useState(
-    'License key validation system for Acronis products'
-  )
-  const [maintenanceMode, setMaintenanceMode] = useState(false)
+  // const [siteName, setSiteName] = useState('Acronis Key Validator')
+  // const [siteDescription, setSiteDescription] = useState(
+  //   'License key validation system for Acronis products'
+  // )
+  // const [maintenanceMode, setMaintenanceMode] = useState(false)
 
   // Email settings state
-  const [smtpHost, setSmtpHost] = useState('smtp.example.com')
-  const [smtpPort, setSmtpPort] = useState('587')
-  const [smtpUser, setSmtpUser] = useState('')
-  const [smtpPassword, setSmtpPassword] = useState('')
-  const [fromEmail, setFromEmail] = useState('noreply@acronis.com')
+  // const [smtpHost, setSmtpHost] = useState('smtp.example.com')
+  // const [smtpPort, setSmtpPort] = useState('587')
+  // const [smtpUser, setSmtpUser] = useState('')
+  // const [smtpPassword, setSmtpPassword] = useState('')
+  // const [fromEmail, setFromEmail] = useState('noreply@acronis.com')
 
   // Notification settings state
-  const [emailNotifications, setEmailNotifications] = useState(true)
-  const [syncNotifications, setSyncNotifications] = useState(true)
-  const [expiryNotifications, setExpiryNotifications] = useState(true)
+  // const [emailNotifications, setEmailNotifications] = useState(true)
+  // const [syncNotifications, setSyncNotifications] = useState(true)
+  // const [expiryNotifications, setExpiryNotifications] = useState(true)
 
   // Security settings state
-  const [twoFactorAuth, setTwoFactorAuth] = useState(false)
-  const [sessionTimeout, setSessionTimeout] = useState('30')
-  const [passwordMinLength, setPasswordMinLength] = useState('8')
+  // const [twoFactorAuth, setTwoFactorAuth] = useState(false)
+  // const [sessionTimeout, setSessionTimeout] = useState('30')
+  // const [passwordMinLength, setPasswordMinLength] = useState('8')
 
   // Admin management state
   const [admins, setAdmins] = useState<Admin[]>([])
@@ -105,26 +107,26 @@ export function SettingsPageClient () {
 
   const loadSettings = async () => {
     try {
-      setLoading(true)
-      const result = await fetchSettings()
+      // setLoading(true)
+      // const result = await fetchSettings()
 
-      if (result.success && result.data) {
-        const settings = result.data
-        setSiteName(settings.site_name)
-        setSiteDescription(settings.site_description)
-        setMaintenanceMode(settings.maintenance_mode)
-        setSmtpHost(settings.smtp_host || 'smtp.example.com')
-        setSmtpPort(settings.smtp_port || '587')
-        setSmtpUser(settings.smtp_user || '')
-        setSmtpPassword(settings.smtp_password || '')
-        setFromEmail(settings.from_email || 'noreply@acronis.com')
-        setEmailNotifications(settings.email_notifications)
-        setSyncNotifications(settings.sync_notifications)
-        setExpiryNotifications(settings.expiry_notifications)
-        setTwoFactorAuth(settings.two_factor_auth)
-        setSessionTimeout(settings.session_timeout)
-        setPasswordMinLength(settings.password_min_length)
-      }
+      // if (result.success && result.data) {
+      //   // const settings = result.data
+      //   // setSiteName(settings.site_name)
+      //   // setSiteDescription(settings.site_description)
+      //   // setMaintenanceMode(settings.maintenance_mode)
+      //   // setSmtpHost(settings.smtp_host || 'smtp.example.com')
+      //   // setSmtpPort(settings.smtp_port || '587')
+      //   // setSmtpUser(settings.smtp_user || '')
+      //   // setSmtpPassword(settings.smtp_password || '')
+      //   // setFromEmail(settings.from_email || 'noreply@acronis.com')
+      //   // setEmailNotifications(settings.email_notifications)
+      //   // setSyncNotifications(settings.sync_notifications)
+      //   // setExpiryNotifications(settings.expiry_notifications)
+      //   // setTwoFactorAuth(settings.two_factor_auth)
+      //   // setSessionTimeout(settings.session_timeout)
+      //   // setPasswordMinLength(settings.password_min_length)
+      // }
     } catch (error) {
       console.error('Error loading settings:', error)
       toast.error('Failed to load settings')
@@ -151,131 +153,131 @@ export function SettingsPageClient () {
     }
   }
 
-  const handleSaveGeneral = async () => {
-    // Check if user has permission to edit settings
-    if (!canEditSettings) {
-      toast.error('You do not have permission to edit settings')
-      return
-    }
+  // const _handleSaveGeneral = async () => {
+  //   // Check if user has permission to edit settings
+  //   if (!canEditSettings) {
+  //     toast.error('You do not have permission to edit settings')
+  //     return
+  //   }
 
-    try {
-      const settingsData = {
-        siteName,
-        siteDescription,
-        maintenanceMode
-      }
+  //   try {
+  //     const settingsData = {
+  //       siteName,
+  //       siteDescription,
+  //       maintenanceMode
+  //     }
 
-      const result = await updateSettings(settingsData)
+  //     const result = await updateSettings(settingsData)
 
-      if (result.success) {
-        toast.success('General settings saved successfully')
-      } else {
-        toast.error(result.error || 'Failed to save general settings')
-      }
-    } catch (error) {
-      console.error('Error saving general settings:', error)
-      toast.error('Failed to save general settings')
-    }
-  }
+  //     if (result.success) {
+  //       toast.success('General settings saved successfully')
+  //     } else {
+  //       toast.error(result.error || 'Failed to save general settings')
+  //     }
+  //   } catch (error) {
+  //     console.error('Error saving general settings:', error)
+  //     toast.error('Failed to save general settings')
+  //   }
+  // }
 
-  const handleSaveEmail = async () => {
-    // Check if user has permission to edit settings
-    if (!canEditSettings) {
-      toast.error('You do not have permission to edit settings')
-      return
-    }
+  // const _handleSaveEmail = async () => {
+  //   // Check if user has permission to edit settings
+  //   if (!canEditSettings) {
+  //     toast.error('You do not have permission to edit settings')
+  //     return
+  //   }
 
-    try {
-      const settingsData = {
-        smtpHost,
-        smtpPort,
-        smtpUser,
-        smtpPassword,
-        fromEmail
-      }
+  //   try {
+  //     const settingsData = {
+  //       smtpHost,
+  //       smtpPort,
+  //       smtpUser,
+  //       smtpPassword,
+  //       fromEmail
+  //     }
 
-      const result = await updateSettings(settingsData)
+  //     const result = await updateSettings(settingsData)
 
-      if (result.success) {
-        toast.success('Email settings saved successfully')
-      } else {
-        toast.error(result.error || 'Failed to save email settings')
-      }
-    } catch (error) {
-      console.error('Error saving email settings:', error)
-      toast.error('Failed to save email settings')
-    }
-  }
+  //     if (result.success) {
+  //       toast.success('Email settings saved successfully')
+  //     } else {
+  //       toast.error(result.error || 'Failed to save email settings')
+  //     }
+  //   } catch (error) {
+  //     console.error('Error saving email settings:', error)
+  //     toast.error('Failed to save email settings')
+  //   }
+  // }
 
-  const handleSaveNotifications = async () => {
-    // Check if user has permission to edit settings
-    if (!canEditSettings) {
-      toast.error('You do not have permission to edit settings')
-      return
-    }
+  // const _handleSaveNotifications = async () => {
+  //   // Check if user has permission to edit settings
+  //   if (!canEditSettings) {
+  //     toast.error('You do not have permission to edit settings')
+  //     return
+  //   }
 
-    try {
-      const settingsData = {
-        emailNotifications,
-        syncNotifications,
-        expiryNotifications
-      }
+  //   try {
+  //     const settingsData = {
+  //       emailNotifications,
+  //       syncNotifications,
+  //       expiryNotifications
+  //     }
 
-      const result = await updateSettings(settingsData)
+  //     const result = await updateSettings(settingsData)
 
-      if (result.success) {
-        toast.success('Notification settings saved successfully')
-      } else {
-        toast.error(result.error || 'Failed to save notification settings')
-      }
-    } catch (error) {
-      console.error('Error saving notification settings:', error)
-      toast.error('Failed to save notification settings')
-    }
-  }
+  //     if (result.success) {
+  //       toast.success('Notification settings saved successfully')
+  //     } else {
+  //       toast.error(result.error || 'Failed to save notification settings')
+  //     }
+  //   } catch (error) {
+  //     console.error('Error saving notification settings:', error)
+  //     toast.error('Failed to save notification settings')
+  //   }
+  // }
 
-  const handleSaveSecurity = async () => {
-    // Check if user has permission to edit settings
-    if (!canEditSettings) {
-      toast.error('You do not have permission to edit settings')
-      return
-    }
+  // const _handleSaveSecurity = async () => {
+  //   // Check if user has permission to edit settings
+  //   if (!canEditSettings) {
+  //     toast.error('You do not have permission to edit settings')
+  //     return
+  //   }
 
-    try {
-      const settingsData = {
-        twoFactorAuth,
-        sessionTimeout,
-        passwordMinLength
-      }
+  //   try {
+  //     const settingsData = {
+  //       twoFactorAuth,
+  //       sessionTimeout,
+  //       passwordMinLength
+  //     }
 
-      const result = await updateSettings(settingsData)
+  //     const result = await updateSettings(settingsData)
 
-      if (result.success) {
-        toast.success('Security settings saved successfully')
-      } else {
-        toast.error(result.error || 'Failed to save security settings')
-      }
-    } catch (error) {
-      console.error('Error saving security settings:', error)
-      toast.error('Failed to save security settings')
-    }
-  }
+  //     if (result.success) {
+  //       toast.success('Security settings saved successfully')
+  //     } else {
+  //       toast.error(result.error || 'Failed to save security settings')
+  //     }
+  //   } catch (error) {
+  //     console.error('Error saving security settings:', error)
+  //     toast.error('Failed to save security settings')
+  //   }
+  // }
 
-  const handleSaveAdmin = async () => {
-    // Check if user has permission to edit settings
-    if (!canEditSettings) {
-      toast.error('You do not have permission to edit settings')
-      return
-    }
+  // const _handleSaveAdmin = async () => {
+  //   // Check if user has permission to edit settings
+  //   if (!canEditSettings) {
+  //     toast.error('You do not have permission to edit settings')
+  //     return
+  //   }
 
-    try {
-      // This would be implemented with actual admin management logic
-      toast.success('Admin settings saved successfully')
-    } catch (error) {
-      console.error('Error saving admin settings:', error)
-      toast.error('Failed to save admin settings')
-    }
-  }
+  //   try {
+  //     // This would be implemented with actual admin management logic
+  //     toast.success('Admin settings saved successfully')
+  //   } catch (error) {
+  //     console.error('Error saving admin settings:', error)
+  //     toast.error('Failed to save admin settings')
+  //   }
+  // }
 
   const handleAddAdmin = () => {
     // Check if user has permission to edit settings
@@ -326,7 +328,7 @@ export function SettingsPageClient () {
     }
   }
 
-  const handleSaveAdminDialog = async (adminData: Admin) => {
+  const _handleSaveAdminDialog = async (_adminData: Admin) => {
     // Check if user has permission to edit settings
     if (!canEditSettings) {
       toast.error('You do not have permission to save admins')
@@ -532,7 +534,7 @@ export function SettingsPageClient () {
         open={isEditDialogOpen}
         onOpenChange={setIsEditDialogOpen}
         admin={editingAdmin}
-        onSave={handleSaveAdminDialog}
+        onSave={_handleSaveAdminDialog}
       />
     </div>
   )

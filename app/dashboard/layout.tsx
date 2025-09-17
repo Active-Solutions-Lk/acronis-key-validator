@@ -57,8 +57,8 @@ function DashboardContent({ children }: { children: React.ReactNode }) {
       // console.log('Fetched user data:', userData)
       setUser(userData as Admin | null)
       setUserChecked(true)
-    } catch (error) {
-      console.error('Error fetching user data:', error)
+    } catch (_error) {
+      console.error('Error fetching user data:', _error)
       setUserChecked(true)
     }
   }
@@ -73,7 +73,8 @@ function DashboardContent({ children }: { children: React.ReactNode }) {
     }
 
     try {
-      const result = await login(alertName, alertPassword)
+      const result = await login(alertName, alertPassword);
+      console.log('Login result:', result)
       
       if (result.success) {
         setMessage('User validated successfully')
@@ -84,10 +85,11 @@ function DashboardContent({ children }: { children: React.ReactNode }) {
         setUser(result.user as Admin | null)
         setUserChecked(true)
       } else {
+        console.log('Login result error:', result.message)  
         setMessage(result.message || 'Validation failed')
       }
-    } catch (error) {
-      // console.log('Error validating user:', error)
+    } catch (_error) {
+      console.log('Error validating user:', _error)
       setMessage('Error validating credentials')
     }
   }

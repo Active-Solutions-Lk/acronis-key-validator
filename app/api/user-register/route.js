@@ -2,7 +2,7 @@ import prisma from '@/lib/prisma';
 
 export async function POST(request) {
   try {
-    const { customer, address, name, email, tel, city, code, actDate, endDate } = await request.json();
+    const { customer, address, name, email, tel, city, code } = await request.json();
 
     if (!name || !email) {
       return new Response(
@@ -95,15 +95,15 @@ export async function POST(request) {
     }
 
     // Update the credential record to link it to the user
-    const updatedCredential = await prisma.credentials.update({
-      where: { id: credential.id },
-      data: {
-        user_id: user.id,
-        actDate: actDate ? new Date(actDate) : null,
-        endDate: endDate ? new Date(endDate) : null,
-        updated_at: new Date(),
-      },
-    });
+    // const _updatedCredential = await prisma.credentials.update({
+    //   where: { id: credential.id },
+    //   data: {
+    //     user_id: user.id,
+    //     actDate: actDate ? new Date(actDate) : null,
+    //     endDate: endDate ? new Date(endDate) : null,
+    //     updated_at: new Date(),
+    //   },
+    // });
 
     return new Response(
       JSON.stringify({ success: true, message: 'User data updated successfully' }),

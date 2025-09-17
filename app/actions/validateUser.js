@@ -50,7 +50,8 @@ async function ValidateUser (data) {
     }
     
     // Remove password from the response data for security
-    const { password: _, ...recordWithoutPassword } = record;
+    const { password: discardedPassword, ...recordWithoutPassword } = record;
+    console.log('discardedPassword', discardedPassword)
     
     return {
       message: 'User validated successfully',

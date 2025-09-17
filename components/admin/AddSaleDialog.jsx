@@ -10,7 +10,7 @@ import {
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
-import { Combobox } from '@/components/ui/combobox';
+import { GenericCombobox } from '@/components/ui/generic-combobox';
 import { TagInput } from '@/components/ui/tag-input';
 import { createSale } from '@/app/actions/createSale';
 import { fetchCredentialsByCodes } from '@/app/actions/fetchCredentialsByCodes';
@@ -300,8 +300,8 @@ export function AddSaleDialog({ onSaleAdded }) {
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-2">
             <Label htmlFor="reseller_id">Reseller</Label>
-            <Combobox
-              cities={resellerOptions}
+            <GenericCombobox
+              options={resellerOptions}
               value={formData.reseller_id}
               onValueChange={(value) => handleChange('reseller_id', value)}
               placeholder="Select a reseller"

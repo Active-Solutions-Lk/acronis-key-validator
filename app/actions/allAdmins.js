@@ -24,7 +24,7 @@ export default async function AllAdmins() {
           created_at: 'desc'
         }
       });
-    } catch (fieldError) {
+    } catch {
       // If the above fails, it's likely because department/privilege don't exist
       // Fall back to selecting only the fields we know exist
       // console.log('Department/privilege fields not found, using fallback query');

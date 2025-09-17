@@ -10,7 +10,7 @@ import {
 } from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { Combobox } from "@/components/ui/combobox"
+import { GenericCombobox } from '@/components/ui/generic-combobox';
 
 export default function AddCredentialDialog({
   isOpen,
@@ -75,8 +75,8 @@ export default function AddCredentialDialog({
           </div>
           <div>
             <label className="text-sm font-medium">Package</label>
-            <Combobox
-              cities={packageOptions}
+            <GenericCombobox
+              options={packageOptions}
               value={formData.pkg_id}
               onValueChange={(value) => setFormData(prev => ({ ...prev, pkg_id: value }))}
               placeholder="Select package"
@@ -84,8 +84,8 @@ export default function AddCredentialDialog({
           </div>
           <div>
             <label className="text-sm font-medium">Reseller</label>
-            <Combobox
-              cities={resellerOptions}
+            <GenericCombobox
+              options={resellerOptions}
               value={formData.reseller_id || ""}
               onValueChange={(value) => setFormData(prev => ({ ...prev, reseller_id: value }))}
               placeholder="Select reseller"
@@ -93,8 +93,8 @@ export default function AddCredentialDialog({
           </div>
           <div>
             <label className="text-sm font-medium">User</label>
-            <Combobox
-              cities={userOptions}
+            <GenericCombobox
+              options={userOptions}
               value={formData.user_id || ""}
               onValueChange={(value) => setFormData(prev => ({ ...prev, user_id: value }))}
               placeholder="Select user"

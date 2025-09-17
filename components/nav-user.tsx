@@ -1,11 +1,8 @@
 "use client"
 
 import {
-  IconCreditCard,
   IconDotsVertical,
   IconLogout,
-  IconNotification,
-  IconUserCircle,
 } from "@tabler/icons-react"
 import { useState, useEffect } from "react"
 
@@ -17,9 +14,8 @@ import {
 import {
   DropdownMenu,
   DropdownMenuContent,
-  DropdownMenuGroup,
-  DropdownMenuItem,
   DropdownMenuLabel,
+  DropdownMenuItem,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
@@ -57,8 +53,8 @@ export function NavUser() {
           username: userData.user_name || "admin",
           sync: userData.sync !== undefined ? userData.sync : false
         })
-      } catch (error) {
-        console.error("Error parsing user data:", error)
+      } catch (_error) {
+        console.error("Error parsing user data:", _error)
       }
     }
   }, [])

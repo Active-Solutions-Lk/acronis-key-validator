@@ -51,7 +51,7 @@ function SyncEmails () {
     } catch (error) {
       setSyncStatus('error')
       setSyncMessage('Error syncing emails')
-    //  console.log('Error fetching master data:', error)
+     console.log('Error fetching master data:', error)
     } finally {
       setIsLoading(false)
     }
@@ -64,21 +64,21 @@ function SyncEmails () {
 
 
   // Trigger server-side cron job (for testing)
-  const startCronJob = async () => {
-    try {
-      const response = await fetch('/api/run-sync', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-      });
-      const result = await response.json();
-      setSyncMessage(result.message);
-      setSyncStatus(response.ok ? 'success' : 'error');
-    } catch (error) {
-      setSyncStatus('error');
-      setSyncMessage('Failed to start cron job');
-      console.error('Error starting cron job:', error);
-    }
-  };
+  // const startCronJob = async () => {
+  //   try {
+  //     const response = await fetch('/api/run-sync', {
+  //       method: 'POST',
+  //       headers: { 'Content-Type': 'application/json' },
+  //     });
+  //     const result = await response.json();
+  //     setSyncMessage(result.message);
+  //     setSyncStatus(response.ok ? 'success' : 'error');
+  //   } catch (error) {
+  //     setSyncStatus('error');
+  //     setSyncMessage('Failed to start cron job');
+  //     console.error('Error starting cron job:', error);
+  //   }
+  // };
 
   // Set up daily sync at 12:00 AM
   useEffect(() => {

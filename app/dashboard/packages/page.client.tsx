@@ -4,7 +4,6 @@ import React, { useState, useEffect } from 'react';
 import AllPackages from '@/app/actions/allPackages';
 import { AddPackageDialog } from '@/components/admin/AddPackageDialog';
 import { PackagesTable } from '@/components/admin/PackagesTable';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { toast } from 'sonner';
 
 function PackagesPageClient() {

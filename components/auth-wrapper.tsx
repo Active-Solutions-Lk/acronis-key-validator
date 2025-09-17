@@ -1,12 +1,12 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import LoginDialog from "@/components/admin/LoginDialog"
 import { useAuth } from '@/components/auth-context'
 
 export default function AuthWrapper({ children }: { children: React.ReactNode }) {
   const { isAuthenticated, login, loading, authChecked } = useAuth()
-  const [showLoginDialog, setShowLoginDialog] = useState(true)
+  // const [_showLoginDialog, _setShowLoginDialog] = useState(true)
   const [alertName, setAlertName] = useState('')
   const [alertPassword, setAlertPassword] = useState('')
   const [message, setMessage] = useState('')
@@ -34,7 +34,7 @@ export default function AuthWrapper({ children }: { children: React.ReactNode })
   if (!isAuthenticated) {
     return (
       <LoginDialog
-        showAlert={showLoginDialog}
+        showAlert={true}
         alertName={alertName}
         setAlertName={setAlertName}
         alertPassword={alertPassword}

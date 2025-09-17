@@ -13,9 +13,9 @@ export async function POST(request) {
   try {
     const {
       id,
-      date,
-      reseller,
-      hoDate,
+      // date,
+      reseller: _reseller,
+      // hoDate,
       pkg,
       actDate,
       endDate,
@@ -62,8 +62,8 @@ export async function POST(request) {
     }
 
     // Normalize DateTime fields
-    const normalizedDate = date ? excelSerialToDate(date).toISOString() : undefined;
-    const normalizedHoDate = hoDate ? excelSerialToDate(hoDate).toISOString() : null;
+    // const _normalizedDate = date ? excelSerialToDate(date).toISOString() : undefined;
+    // const _normalizedHoDate = hoDate ? excelSerialToDate(hoDate).toISOString() : null;
     const normalizedActDate = actDate ? excelSerialToDate(actDate).toISOString() : null;
     const normalizedEndDate = endDate ? excelSerialToDate(endDate).toISOString() : null;
 
@@ -114,6 +114,7 @@ export async function POST(request) {
 
     // Update credentials information if provided
     if (existingCredentials) {
+      console.log('reseller', _reseller)
       // Find package if pkg name is provided
       let pkgId = existingCredentials.pkg_id
       if (pkg) {

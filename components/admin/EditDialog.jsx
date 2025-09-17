@@ -10,7 +10,7 @@ import {
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { Combobox } from '@/components/ui/combobox'
+import { GenericCombobox } from '@/components/ui/generic-combobox';
 
 function EditDialog({
   isEditDialogOpen,
@@ -118,9 +118,9 @@ function EditDialog({
           <div className="grid grid-cols-2 gap-6">
             <div className="grid gap-2">
               <Label htmlFor="reseller">Reseller</Label>
-              <Combobox
+              <GenericCombobox
                 title="reseller"
-                cities={resellerOptions}
+                options={resellerOptions}
                 value={editingRow.reseller || ''}
                 onValueChange={handleResellerChange}
                 placeholder="Select reseller..."
@@ -220,9 +220,9 @@ function EditDialog({
           <div className="grid grid-cols-2 gap-4">
             <div className="grid gap-2">
               <Label htmlFor="pkg">Package</Label>
-              <Combobox
+              <GenericCombobox
                 title="package"
-                cities={packageOptions}
+                options={packageOptions}
                 value={editingRow.package || ''}
                 onValueChange={handlePackageChange}
                 placeholder="Select package..."
@@ -237,9 +237,9 @@ function EditDialog({
             </div>
             <div className="grid gap-2">
               <Label htmlFor="code">QR Code</Label>
-              <Combobox
+              <GenericCombobox
                 title="qr code"
-                cities={qrCodeOptions}
+                options={qrCodeOptions}
                 value={editingRow.code || ''}
                 onValueChange={handleQRCodeChange}
                 placeholder="Select QR code..."
@@ -254,9 +254,9 @@ function EditDialog({
           <div className="grid grid-cols-2 gap-4">
             <div className="grid gap-2">
               <Label htmlFor="accMail">Account Email</Label>
-              <Combobox
+              <GenericCombobox
                 title="account email"
-                cities={accountEmailOptions}
+                options={accountEmailOptions}
                 value={editingRow.accMail || ''}
                 onValueChange={handleAccountEmailChange}
                 placeholder="Select account email..."
@@ -268,9 +268,9 @@ function EditDialog({
             </div>
             <div className="grid gap-2">
               <Label htmlFor="password">Password</Label>
-              <Combobox
+              <GenericCombobox
                 title="password"
-                cities={passwordOptions}
+                options={passwordOptions}
                 value={editingRow.password || ''}
                 onValueChange={handlePasswordChange}
                 placeholder="Select password..."

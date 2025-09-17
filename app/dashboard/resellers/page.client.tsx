@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback } from 'react'
 import { Card, CardContent } from '@/components/ui/card'
 import { toast } from 'sonner'
-import { flexRender, getCoreRowModel, useReactTable, getSortedRowModel, getFilteredRowModel, getPaginationRowModel } from '@tanstack/react-table'
+import { flexRender, getCoreRowModel, useReactTable, getSortedRowModel, getFilteredRowModel, getPaginationRowModel, ColumnDef, SortingState } from '@tanstack/react-table'
 import { Search, MoreHorizontal, Trash2, Edit, Plus } from 'lucide-react'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Button } from '@/components/ui/button'
@@ -18,27 +18,68 @@ import UpdateReseller from '../../actions/updateReseller'
 import CreateReseller from '../../actions/createReseller'
 import DeleteReseller, { BulkDeleteResellers } from '../../actions/deleteReseller'
 
-const Table = ({ children, ...props }) => <table className='w-full caption-bottom text-sm' {...props}>{children}</table>
-const TableHeader = ({ children, ...props }) => <thead className='[&_tr]:border-b' {...props}>{children}</thead>
-const TableBody = ({ children, ...props }) => <tbody className='[&_tr:last-child]:border-0' {...props}>{children}</tbody>
-const TableRow = ({ children, className = '', ...props }) => <tr className={`border-b transition-colors hover:bg-muted/50 ${className}`} {...props}>{children}</tr>
-const TableHead = ({ children, className = '', ...props }) => <th className={`h-12 px-2 text-left align-middle font-medium text-muted-foreground ${className}`} {...props}>{children}</th>
-const TableCell = ({ children, className = '', ...props }) => <td className={`p-2 align-middle ${className}`} {...props}>{children}</td>
-const Input = ({ className = '', ...props }) => <input className={`flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ${className}`} {...props} />
+// Define TypeScript interfaces
+interface City {
+  id: number
+  district: string
+  city: string
+}
+
+interface Reseller {
+  customer_id: number
+  company_name: string
+  address: string | null
+  type: string
+  credit_limit: string | null
+  payment_terms: string | null
+  note: string | null
+  vat: string | null
+  city: number | null
+  sri_lanka_districts_cities?: City | null
+  created_at: string
+  updated_at: string
+}
+
+interface CityOption {
+  value: number
+  label: string
+  id?: number
+  name?: string
+}
+
+interface AddFormData {
+  company_name: string
+  address: string
+  type: string
+  credit_limit: string
+  payment_terms: string
+  note: string
+  vat: string
+  city: string
+}
+
+const Table = ({ children, ...props }: { children: React.ReactNode } & React.HTMLAttributes<HTMLTableElement>) => <table className='w-full caption-bottom text-sm' {...props}>{children}</table>
+const TableHeader = ({ children, ...props }: { children: React.ReactNode } & React.HTMLAttributes<HTMLTableSectionElement>) => <thead className='[&_tr]:border-b' {...props}>{children}</thead>
+const TableBody = ({ children, ...props }: { children: React.ReactNode } & React.HTMLAttributes<HTMLTableSectionElement>) => <tbody className='[&_tr:last-child]:border-0' {...props}>{children}</tbody>
+const TableRow = ({ children, className = '', ...props }: { children: React.ReactNode; className?: string } & React.HTMLAttributes<HTMLTableRowElement>) => <tr className={`border-b transition-colors hover:bg-muted/50 ${className}`} {...props}>{children}</tr>
+const TableHead = ({ children, className = '', ...props }: { children: React.ReactNode; className?: string } & React.ThHTMLAttributes<HTMLTableCellElement>) => <th className={`h-12 px-2 text-left align-middle font-medium text-muted-foreground ${className}`} {...props}>{children}</th>
+const TableCell = ({ children, className = '', ...props }: { children: React.ReactNode; className?: string } & React.TdHTMLAttributes<HTMLTableCellElement>) => <td className={`p-2 align-middle ${className}`} {...props}>{children}</td>
+const Input = ({ className = '', ...props }: { className?: string } & React.InputHTMLAttributes<HTMLInputElement>) => <input className={`flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ${className}`} {...props} />
 
 function ResellersPageClient() {
-  const [message, setMessage] = useState('')
-  const [data, setData] = useState([])
-  const [cities, setCities] = useState([])
-  const [loading, setLoading] = useState(false)
-  const [initialLoading, setInitialLoading] = useState(true)
-  const [sorting, setSorting] = useState([])
-  const [globalFilter, setGlobalFilter] = useState('')
-  const [rowSelection, setRowSelection] = useState({})
-  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false)
-  const [isAddDialogOpen, setIsAddDialogOpen] = useState(false)
-  const [editingRow, setEditingRow] = useState(null)
-  const [addFormData, setAddFormData] = useState({
+  const [message, setMessage] = useState<string>('')
+  const [data, setData] = useState<Reseller[]>([])
+  const [cities, setCities] = useState<CityOption[]>([])
+  console.log('cities', cities)
+  const [loading, setLoading] = useState<boolean>(false)
+  const [initialLoading, setInitialLoading] = useState<boolean>(true)
+  const [sorting, setSorting] = useState<SortingState>([])
+  const [globalFilter, setGlobalFilter] = useState<string>('')
+  const [rowSelection, setRowSelection] = useState<Record<string, boolean>>({})
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState<boolean>(false)
+  const [isAddDialogOpen, setIsAddDialogOpen] = useState<boolean>(false)
+  const [editingRow, setEditingRow] = useState<Reseller | null>(null)
+  const [addFormData, setAddFormData] = useState<AddFormData>({
     company_name: '',
     address: '',
     type: '',
@@ -50,7 +91,7 @@ function ResellersPageClient() {
   })
 
   // Delete handlers
-  const handleDeleteReseller = useCallback(async (id) => {
+  const handleDeleteReseller = useCallback(async (id: number) => {
     try {
       const response = await DeleteReseller(id)
       if (response.success) {
@@ -66,7 +107,7 @@ function ResellersPageClient() {
   }, [])
 
   // Define columns inside the component so they have access to state and handlers
-  const columns = [
+  const columns: ColumnDef<Reseller>[] = [
     {
       id: 'select',
       header: ({ table }) => (
@@ -142,11 +183,22 @@ function ResellersPageClient() {
   ]
 
   const table = useReactTable({
-    data, columns, onSortingChange: setSorting, getCoreRowModel: getCoreRowModel(), getSortedRowModel: getSortedRowModel(),
-    getFilteredRowModel: getFilteredRowModel(), getPaginationRowModel: getPaginationRowModel(), onGlobalFilterChange: setGlobalFilter,
-    globalFilterFn: 'includesString', state: { sorting, globalFilter, rowSelection }, 
-    enableRowSelection: true, onRowSelectionChange: setRowSelection,
-    initialState: { pagination: { pageSize: 10 }, sorting: [{ id: 'customer_id', asc: true }] }
+    data, 
+    columns, 
+    onSortingChange: setSorting, 
+    getCoreRowModel: getCoreRowModel(), 
+    getSortedRowModel: getSortedRowModel(),
+    getFilteredRowModel: getFilteredRowModel(), 
+    getPaginationRowModel: getPaginationRowModel(), 
+    onGlobalFilterChange: setGlobalFilter,
+    globalFilterFn: 'includesString', 
+    state: { sorting, globalFilter, rowSelection }, 
+    enableRowSelection: true, 
+    onRowSelectionChange: setRowSelection,
+    initialState: { 
+      pagination: { pageSize: 10 }, 
+      sorting: [{ id: 'customer_id', desc: false }] 
+    }
   })
 
   useEffect(() => {
@@ -167,7 +219,7 @@ function ResellersPageClient() {
         
         if (citiesResponse.success) {
           // Transform cities data for the combobox component
-          const transformedCities = citiesResponse.cities?.map(city => ({
+          const transformedCities: CityOption[] = citiesResponse.cities?.map((city: City) => ({
             value: city.id,
             label: `${city.city}`,
             id: city.id,
@@ -189,7 +241,7 @@ function ResellersPageClient() {
     fetchData()
   }, [])
 
-  const handleRowDoubleClick = (row) => { setEditingRow({ ...row }); setIsEditDialogOpen(true) }
+  const handleRowDoubleClick = (row: Reseller) => { setEditingRow({ ...row }); setIsEditDialogOpen(true) }
   
   const handleUpdateData = useCallback(async () => {
     if (!editingRow) return
@@ -212,7 +264,7 @@ function ResellersPageClient() {
     }
   }, [editingRow])
 
-  const handleInputChange = (field, value) => { if (editingRow) setEditingRow(prev => ({ ...prev, [field]: value })) }
+  const handleInputChange = (field: string, value: string) => { if (editingRow) setEditingRow(prev => ({ ...prev, [field]: value }) as Reseller) }
 
   const handleBulkDelete = useCallback(async () => {
     const selectedIds = Object.keys(rowSelection).map(index => data[parseInt(index)].customer_id)
@@ -315,7 +367,7 @@ function ResellersPageClient() {
                           {header.isPlaceholder ? null : (
                             <div className="flex items-center">
                               {flexRender(header.column.columnDef.header, header.getContext())}
-                              {{ asc: ' 🔼', desc: ' 🔽' }[header.column.getIsSorted()] ?? null}
+                              {{ asc: ' 🔼', desc: ' 🔽' }[header.column.getIsSorted() as string] ?? null}
                             </div>
                           )}
                         </TableHead>
@@ -361,7 +413,7 @@ function ResellersPageClient() {
         handleInputChange={handleInputChange}
         handleUpdateData={handleUpdateData}
         masterLoading={loading}
-        cities={cities}
+        cities={[]}
       />
 
       <AddResellerDialog
@@ -370,7 +422,7 @@ function ResellersPageClient() {
         formData={addFormData}
         setFormData={setAddFormData}
         onSubmit={handleAddReseller}
-        cities={cities}
+        cities={[]}
       />
     </div>
   )
