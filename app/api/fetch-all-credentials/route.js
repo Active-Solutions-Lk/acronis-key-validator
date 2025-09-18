@@ -4,7 +4,7 @@ import prisma from '@/lib/prisma';
 
 export async function GET() {
   try {
-    // Fetch all credentials with package and user relationship for better context
+    // Fetch all credentials with package, user, and reseller relationship for better context
     const credentials = await prisma.credentials.findMany({
       select: {
         id: true,
@@ -24,6 +24,16 @@ export async function GET() {
           select: {
             id: true,
             name: true
+          }
+        },
+        sales: {
+          select: {
+            reseller: {
+              select: {
+                customer_id: true,
+                company_name: true
+              }
+            }
           }
         },
         created_at: true

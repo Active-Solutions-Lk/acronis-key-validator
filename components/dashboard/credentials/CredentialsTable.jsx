@@ -44,7 +44,9 @@ export default function CredentialsTable({
   getRowHighlightClass // Add this prop for row highlighting
 }) {
   // Get permissions
-  const { canEdit, canDelete, canView } = usePermissions()
+  const { canEdit, canDelete, canView } = usePermissions();
+
+  console.log('data', data);
   
   // Check if user can view credentials
   const canAccessCredentials = canView('credentials')
@@ -88,14 +90,14 @@ export default function CredentialsTable({
   return (
     <>
       {/* Table */}
-      <div className="rounded-md border">
-        <Table>
-          <TableHeader>
+      <div className="rounded-md border max-h-[calc(100vh-200px)] overflow-auto">
+        <Table className="min-w-full">
+          <TableHeader className="sticky top-0 bg-white z-10 shadow">
             {table.getHeaderGroups().map((headerGroup) => (
               <TableRow key={headerGroup.id}>
                 {headerGroup.headers.map((header) => {
                   return (
-                    <TableHead key={header.id} className="h-12">
+                    <TableHead key={header.id} className="h-12 whitespace-nowrap">
                       {header.isPlaceholder
                         ? null
                         : flexRender(
@@ -117,11 +119,13 @@ export default function CredentialsTable({
                   className={`h-12 ${getRowHighlightClass ? getRowHighlightClass(row.original) : ''}`}
                 >
                   {row.getVisibleCells().map((cell) => (
-                    <TableCell key={cell.id}>
-                      {flexRender(
-                        cell.column.columnDef.cell,
-                        cell.getContext()
-                      )}
+                    <TableCell key={cell.id} className="whitespace-nowrap overflow-hidden max-w-xs">
+                      <div className="truncate">
+                        {flexRender(
+                          cell.column.columnDef.cell,
+                          cell.getContext()
+                        )}
+                      </div>
                     </TableCell>
                   ))}
                 </TableRow>

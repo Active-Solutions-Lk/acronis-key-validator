@@ -2,7 +2,7 @@ import prisma from '@/lib/prisma';
 
 export async function POST(request) {
   try {
-    const { customer, address, name, email, tel, city, code } = await request.json();
+    const { customer, address, name, email, tel, city, code, actDate, endDate } = await request.json();
 
     if (!name || !email) {
       return new Response(
@@ -18,18 +18,7 @@ export async function POST(request) {
       );
     }
 
-    // // Convert code to integer since it's actually the ID
-    // const credentialId = parseInt(code);
-    
-    // // Check if conversion was successful
-    // if (isNaN(credentialId)) {
-    //   return new Response(
-    //     JSON.stringify({ success: false, error: 'Invalid code format. Code must be a number.' }),
-    //     { status: 400 }
-    //   );
-    // }
-
-    // First, find the credential record with the given id (not code)
+    // First, find the credential record with the given code
     const credential = await prisma.credentials.findFirst({
       where: { code: code },
     });
@@ -95,18 +84,18 @@ export async function POST(request) {
     }
 
     // Update the credential record to link it to the user
-    // const _updatedCredential = await prisma.credentials.update({
-    //   where: { id: credential.id },
-    //   data: {
-    //     user_id: user.id,
-    //     actDate: actDate ? new Date(actDate) : null,
-    //     endDate: endDate ? new Date(endDate) : null,
-    //     updated_at: new Date(),
-    //   },
-    // });
+    const updatedCredential = await prisma.credentials.update({
+      where: { id: credential.id },
+      data: {
+        user_id: user.id,
+        actDate: actDate ? new Date(actDate) : null,
+        endDate: endDate ? new Date(endDate) : null,
+        updated_at: new Date(),
+      },
+    });
 
     return new Response(
-      JSON.stringify({ success: true, message: 'User data updated successfully' }),
+      JSON.stringify({ success: true, message: 'User data updated successfully', user: user, credential: updatedCredential }),
       { status: 200 }
     );
   } catch (error) {

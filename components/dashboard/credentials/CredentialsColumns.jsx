@@ -125,8 +125,9 @@ export function useCredentialsColumns({
         
         return (
           <div 
-            className="cursor-pointer hover:bg-gray-50 p-1 rounded"
+            className="cursor-pointer hover:bg-gray-50 p-1 rounded truncate max-w-xs"
             onClick={() => canEditCredentials && startInlineEdit(row.original.id, "email", email)}
+            title={email}
           >
             {email}
           </div>
@@ -173,8 +174,9 @@ export function useCredentialsColumns({
         return (
           <div className="flex items-center space-x-2">
             <div 
-              className="cursor-pointer hover:bg-gray-50 p-1 rounded flex-1"
+              className="cursor-pointer hover:bg-gray-50 p-1 rounded flex-1 truncate max-w-xs"
               onClick={() => canEditCredentials && startInlineEdit(row.original.id, "password", password)}
+              title={password}
             >
               {isVisible ? password : "••••••••"}
             </div>
@@ -205,7 +207,7 @@ export function useCredentialsColumns({
       cell: ({ row }) => {
         const packageName = row.original.pkg?.name || "Unknown"
         return (
-          <Badge variant="secondary" className="font-medium">
+          <Badge variant="secondary" className="font-medium truncate max-w-xs" title={packageName}>
             {packageName}
           </Badge>
         )
@@ -217,7 +219,7 @@ export function useCredentialsColumns({
         <Button
           variant="ghost"
           onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-          className="h-8 px-2"
+          className="h-8 px-0"
         >
           Quota
           <ArrowUpDown className="ml-2 h-4 w-4" />
@@ -229,12 +231,12 @@ export function useCredentialsColumns({
         
         if (isEditing) {
           return (
-            <div className="flex items-center space-x-2">
+            <div className="flex items-center space-x-2 p-0 ">
               <Input
                 type="number"
                 value={tempValue}
                 onChange={(e) => setTempValue(e.target.value)}
-                className="h-8 w-20"
+                className="h-8 w-15"
               />
               <Button
                 size="sm"
@@ -258,8 +260,9 @@ export function useCredentialsColumns({
         
         return (
           <div 
-            className="cursor-pointer hover:bg-gray-50 p-1 rounded text-right"
+            className="cursor-pointer hover:bg-gray-50 p-1 rounded text-right truncate max-w-xs"
             onClick={() => canEditCredentials && startInlineEdit(row.original.id, "quota", quota)}
+            title={quota && typeof quota === 'number' ? quota.toLocaleString() : "—"}
           >
             {quota && typeof quota === 'number' ? quota.toLocaleString() : "—"}
           </div>
@@ -303,8 +306,9 @@ export function useCredentialsColumns({
         
         return (
           <div 
-            className="cursor-pointer hover:bg-gray-50 p-1 rounded"
+            className="cursor-pointer hover:bg-gray-50 p-1 rounded truncate max-w-xs"
             onClick={() => canEditCredentials && startInlineEdit(row.original.id, "code", code)}
+            title={code}
           >
             {code ? (
               <Badge variant="outline">{code}</Badge>
@@ -315,29 +319,73 @@ export function useCredentialsColumns({
         )
       },
     },
+    // {
+    //   accessorKey: "created_at",
+    //   header: ({ column }) => (
+    //     <Button
+    //       variant="ghost"
+    //       onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+    //       className="h-8 px-2"
+    //     >
+    //       Created
+    //       <ArrowUpDown className="ml-2 h-4 w-4" />
+    //     </Button>
+    //   ),
+    //   cell: ({ row }) => {
+    //     const dateValue = row.getValue("created_at")
+    //     if (!dateValue) {
+    //       return <div className="text-sm text-gray-600">—</div>
+    //     }
+    //     const date = new Date(dateValue)
+    //     return (
+    //       <div className="text-sm text-gray-600">
+    //         {date.toLocaleDateString()}
+    //       </div>
+    //     )
+    //   },
+    // },
     {
-      accessorKey: "created_at",
-      header: ({ column }) => (
-        <Button
-          variant="ghost"
-          onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-          className="h-8 px-2"
-        >
-          Created
-          <ArrowUpDown className="ml-2 h-4 w-4" />
-        </Button>
-      ),
+      accessorKey: "user_id",
+      header: "User",
       cell: ({ row }) => {
-        const dateValue = row.getValue("created_at")
-        if (!dateValue) {
-          return <div className="text-sm text-gray-600">—</div>
+        const user = row.original.user;
+        if (!user) {
+          return <div className="text-gray-400">—</div>;
         }
-        const date = new Date(dateValue)
+        
+        const userDisplay = user.name || user.email || user.id;
+        
         return (
-          <div className="text-sm text-gray-600">
-            {date.toLocaleDateString()}
-          </div>
-        )
+          <a 
+            href={`/dashboard/users#${user.id}`} 
+            className="text-blue-600 hover:underline truncate max-w-xs block"
+            title={userDisplay}
+          >
+            {userDisplay}
+          </a>
+        );
+      },
+    },
+    {
+      accessorKey: "reseller_id",
+      header: "Reseller",
+      cell: ({ row }) => {
+        const reseller = row.original.reseller;
+        if (!reseller) {
+          return <div className="text-gray-400">—</div>;
+        }
+        
+        const resellerDisplay = reseller.company_name || reseller.customer_id;
+        
+        return (
+          <a 
+            href={`/dashboard/resellers#${reseller.customer_id}`} 
+            className="text-blue-600 hover:underline truncate max-w-xs block"
+            title={resellerDisplay}
+          >
+            {resellerDisplay}
+          </a>
+        );
       },
     },
     {
@@ -345,6 +393,8 @@ export function useCredentialsColumns({
       enableHiding: false,
       cell: ({ row }) => {
         const credential = row.original
+
+        // console.log("credential: ", credential)
 
         return (
           <DropdownMenu>
@@ -376,7 +426,8 @@ export function useCredentialsColumns({
                       password: credential.password,
                       pkg_id: credential.pkg_id?.toString() || "",
                       quota: credential.quota?.toString() || "",
-                      code: credential.code || ""
+                      code: credential.code || "",
+                      user_id: credential.user_id?.toString() || "",
                     })
                     setIsEditDialogOpen(true)
                   }}

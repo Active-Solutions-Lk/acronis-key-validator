@@ -210,14 +210,20 @@ function CredentialsPage () {
               code: credential.code,
               quota: credential.quota,
               pkg_id: credential.pkg?.id,
-              user_id: credential.user_id,
+              user_id: credential.user?.id || null,
+              reseller_id: credential.sales && credential.sales.length > 0 
+                ? credential.sales[0].reseller?.customer_id || null 
+                : null,
               created_at: credential.created_at,
               updated_at: credential.created_at,
               pkg: {
                 name: credential.pkg?.name || 'Unknown'
               },
+              user: credential.user || null,
+              reseller: credential.sales && credential.sales.length > 0 
+                ? credential.sales[0].reseller || null 
+                : null,
               // Add fields for master page compatibility
-              reseller: null, // Will be populated from sales data
               customer: credential.user?.company || credential.user?.name || null,
               accMail: credential.email,
               actDate: credential.actDate,
@@ -510,7 +516,12 @@ function CredentialsPage () {
           created_at: credential.created_at,
           updated_at: credential.created_at,
           pkg: {
+            id : credential.pkg?.id,
             name: credential.pkg?.name || 'Unknown'
+          },
+          user:{
+            id: credential.user?.id,
+            name: credential.user?.name || 'Unknown'
           }
         }))
         setData(transformedData)
