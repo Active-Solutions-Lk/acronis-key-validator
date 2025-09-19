@@ -77,70 +77,59 @@ function CredentialsPage () {
     user_id: ''
   })
 
-  // Custom hooks for actions
-  const {
-    togglePasswordVisibility,
-    handleInlineEdit,
-    handleDeleteCredential,
-    handleBulkDelete
-  } = useCredentialsActions(data, setData, setRowSelection)
-
-  // Inline editing functions
-  const saveInlineEdit = React.useCallback(
-    (rowId, field) => {
-      // Check if user has permission to edit
-      if (!canEditCredentials) {
-        toast.error('You do not have permission to edit credentials')
-        return
-      }
-      handleInlineEdit(rowId, field, tempValue)
-      setEditingCell(null)
-      setTempValue('')
-    },
-    [handleInlineEdit, tempValue, canEditCredentials]
-  )
-
-  const startInlineEdit = React.useCallback((rowId, field, currentValue) => {
-    // Check if user has permission to edit
-    if (!canEditCredentials) {
-      toast.error('You do not have permission to edit credentials')
-      return
-    }
-    setEditingCell(`${rowId}-${field}`)
-    setTempValue(currentValue || '')
-  }, [canEditCredentials])
-
-  const cancelInlineEdit = React.useCallback(() => {
-    setEditingCell(null)
-    setTempValue('')
-  }, [])
-
-  // Table columns
-  const columns = useCredentialsColumns({
-    showPasswords,
-    togglePasswordVisibility: id =>
-      togglePasswordVisibility(id, showPasswords, setShowPasswords),
-    editingCell,
-    tempValue,
-    setTempValue,
-    saveInlineEdit,
-    cancelInlineEdit,
-    startInlineEdit,
-    handleDeleteCredential: (id) => {
-      // Check if user has permission to delete
-      if (!canDeleteCredentials) {
-        toast.error('You do not have permission to delete credentials')
-        return
-      }
-      handleDeleteCredential(id)
-    },
-    setEditingRow,
-    setFormData,
-    setIsEditDialogOpen
-  })
-
   const [expList, setExpList] = React.useState([])
   const [resellers, setResellers] = React.useState([])
+
+  // Define refreshData function
+  const refreshData = React.useCallback(async () => {
+    try {
+      setLoading(true)
+      setError(null)
+
+      const result = await AllCredentials()
+
+      if (result.success) {
+        const transformedData = result.credentials.map(credential => ({
+          id: credential.id,
+          email: credential.email,
+          password: credential.password,
+          code: credential.code,
+          quota: credential.quota,
+          pkg_id: credential.pkg?.id,
+          user_id: credential.user?.id || null,
+          reseller_id: credential.sales && credential.sales.length > 0 
+            ? credential.sales[0].reseller?.customer_id || null 
+            : null,
+          created_at: credential.created_at,
+          updated_at: credential.created_at,
+          pkg: {
+            id: credential.pkg?.id,
+            name: credential.pkg?.name || 'Unknown'
+          },
+          user: credential.user || null,
+          reseller: credential.sales && credential.sales.length > 0 
+            ? credential.sales[0].reseller || null 
+            : null,
+          // Add fields for master page compatibility
+          customer: credential.user?.company || credential.user?.name || null,
+          accMail: credential.email,
+          actDate: credential.actDate,
+          endDate: credential.endDate
+        }))
+        setData(transformedData)
+        toast.success('Data refreshed successfully')
+      } else {
+        setError(result.error || 'Failed to refresh credentials')
+        toast.error('Failed to refresh data')
+      }
+    } catch (err) {
+      console.error('Error refreshing data:', err)
+      setError('Failed to refresh data')
+      toast.error('Failed to refresh data')
+    } finally {
+      setLoading(false)
+    }
+  }, [])
 
   // Memoized data for performance
   const memoizedPackages = React.useMemo(() => 
@@ -277,6 +266,68 @@ function CredentialsPage () {
     fetchData()
   }, [])
 
+  // Custom hooks for actions - now all dependencies are initialized before this is called
+  const {
+    togglePasswordVisibility,
+    handleInlineEdit,
+    handleDeleteCredential,
+    handleBulkDelete
+  } = useCredentialsActions(data, setData, setRowSelection, refreshData)
+
+  // Inline editing functions
+  const saveInlineEdit = React.useCallback(
+    (rowId, field) => {
+      // Check if user has permission to edit
+      if (!canEditCredentials) {
+        toast.error('You do not have permission to edit credentials')
+        return
+      }
+      handleInlineEdit(rowId, field, tempValue)
+      setEditingCell(null)
+      setTempValue('')
+    },
+    [handleInlineEdit, tempValue, canEditCredentials]
+  )
+
+  const startInlineEdit = React.useCallback((rowId, field, currentValue) => {
+    // Check if user has permission to edit
+    if (!canEditCredentials) {
+      toast.error('You do not have permission to edit credentials')
+      return
+    }
+    setEditingCell(`${rowId}-${field}`)
+    setTempValue(currentValue || '')
+  }, [canEditCredentials])
+
+  const cancelInlineEdit = React.useCallback(() => {
+    setEditingCell(null)
+    setTempValue('')
+  }, [])
+
+  // Table columns
+  const columns = useCredentialsColumns({
+    showPasswords,
+    togglePasswordVisibility: id =>
+      togglePasswordVisibility(id, showPasswords, setShowPasswords),
+    editingCell,
+    tempValue,
+    setTempValue,
+    saveInlineEdit,
+    cancelInlineEdit,
+    startInlineEdit,
+    handleDeleteCredential: (id) => {
+      // Check if user has permission to delete
+      if (!canDeleteCredentials) {
+        toast.error('You do not have permission to delete credentials')
+        return
+      }
+      handleDeleteCredential(id)
+    },
+    setEditingRow,
+    setFormData,
+    setIsEditDialogOpen
+  })
+
   // Optimized callback with useCallback to prevent unnecessary re-renders
   const handleUpdateData = React.useCallback(async (updatedRow) => {
     setLoading(true)
@@ -343,22 +394,8 @@ function CredentialsPage () {
       })
 
       if (result.success) {
-        const newCredential = {
-          id: result.credential.id,
-          email: result.credential.accMail || result.credential.email || result.credential.user?.email,
-          password: result.credential.password,
-          code: result.credential.code,
-          quota: result.credential.quota,
-          pkg_id: result.credential.pkg_id,
-          user_id: result.credential.user_id,
-          created_at: result.credential.created_at,
-          updated_at: result.credential.updated_at,
-          pkg: {
-            name: result.credential.package || result.credential.pkg?.name || 'Unknown'
-          }
-        }
-
-        setData(prev => [newCredential, ...prev])
+        // Refresh data to ensure consistency with server state
+        await refreshData()
         setIsAddDialogOpen(false)
         setFormData({
           email: '',
@@ -370,7 +407,6 @@ function CredentialsPage () {
           user_id: ''
         })
         toast.success(result.message || 'Credential created successfully')
-       // console.log('Adding credential:', newCredential)
       } else {
         toast.error(result.error || 'Failed to create credential')
       }
@@ -378,7 +414,7 @@ function CredentialsPage () {
       console.error('Error adding credential:', error)
       toast.error('An unexpected error occurred')
     }
-  }, [formData, canEditCredentials])
+  }, [formData, canEditCredentials, refreshData])
 
   const handleEditCredential = React.useCallback(async () => {
     // Check if user has permission to edit
@@ -399,6 +435,7 @@ function CredentialsPage () {
         return
       }
 
+      console.log('formData', formData)
       const result = await UpdateCredential(editingRow.id, {
         email: formData.email,
         password: formData.password,
@@ -410,30 +447,11 @@ function CredentialsPage () {
       })
 
       if (result.success) {
-        const updatedCredential = {
-          id: result.credential.id,
-          email: result.credential.accMail || result.credential.email,
-          password: result.credential.password,
-          code: result.credential.code,
-          quota: result.credential.quota,
-          pkg_id: result.credential.pkg_id,
-          user_id: result.credential.user_id,
-          created_at: result.credential.created_at,
-          updated_at: result.credential.updated_at,
-          pkg: {
-            name: result.credential.package || result.credential.pkg?.name || 'Unknown'
-          }
-        }
-
-        const updatedData = data.map(item =>
-          item.id === editingRow?.id ? updatedCredential : item
-        )
-
-        setData(updatedData)
+        // Refresh data to ensure consistency with server state
+        await refreshData()
         setIsEditDialogOpen(false)
         setEditingRow(null)
         toast.success(result.message || 'Credential updated successfully')
-        //('Editing credential:', updatedCredential)
       } else {
         toast.error(result.error || 'Failed to update credential')
       }
@@ -441,7 +459,7 @@ function CredentialsPage () {
       console.error('Error updating credential:', error)
       toast.error('An unexpected error occurred')
     }
-  }, [formData, editingRow, data, canEditCredentials])
+  }, [formData, editingRow, canEditCredentials, refreshData])
 
   const handleUploadCredential = React.useCallback(async (credentialData) => {
     // Check if user has permission to create
@@ -463,25 +481,12 @@ function CredentialsPage () {
       })
 
       if (result.success) {
-        const newCredential = {
-          id: result.credential.id,
-          email: result.credential.accMail || result.credential.email || result.credential.user?.email,
-          password: result.credential.password,
-          code: result.credential.code,
-          quota: result.credential.quota,
-          pkg_id: result.credential.pkg_id,
-          created_at: result.credential.created_at,
-          updated_at: result.credential.updated_at,
-          pkg: {
-            name: result.credential.package || result.credential.pkg?.name || 'Unknown'
-          }
-        }
-
-        setData(prev => [newCredential, ...prev])
+        // Refresh data to ensure consistency with server state
+        await refreshData()
         return { 
           success: true, 
           message: result.message || 'Credential created successfully',
-          credential: newCredential
+          credential: result.credential
         }
       } else {
         return { 
@@ -496,48 +501,7 @@ function CredentialsPage () {
         error: error.message || 'An unexpected error occurred'
       }
     }
-  }, [canEditCredentials])
-
-  const refreshData = React.useCallback(async () => {
-    try {
-      setLoading(true)
-      setError(null)
-
-      const result = await AllCredentials()
-
-      if (result.success) {
-        const transformedData = result.credentials.map(credential => ({
-          id: credential.id,
-          email: credential.email,
-          password: credential.password,
-          code: credential.code,
-          quota: credential.quota,
-          pkg_id: credential.pkg?.id,
-          created_at: credential.created_at,
-          updated_at: credential.created_at,
-          pkg: {
-            id : credential.pkg?.id,
-            name: credential.pkg?.name || 'Unknown'
-          },
-          user:{
-            id: credential.user?.id,
-            name: credential.user?.name || 'Unknown'
-          }
-        }))
-        setData(transformedData)
-        toast.success('Data refreshed successfully')
-      } else {
-        setError(result.error || 'Failed to refresh credentials')
-        toast.error('Failed to refresh data')
-      }
-    } catch (err) {
-      console.error('Error refreshing data:', err)
-      setError('Failed to refresh data')
-      toast.error('Failed to refresh data')
-    } finally {
-      setLoading(false)
-    }
-  }, [])
+  }, [canEditCredentials, refreshData])
 
   // Mock table object for header component compatibility
   const mockTable = React.useMemo(

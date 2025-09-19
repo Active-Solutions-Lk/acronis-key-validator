@@ -12,6 +12,7 @@ export default async function AllCities() {
     }
 
     const responseData = await response.json();
+    console.log(responseData);
     if (responseData.success) {
       return { 
         success: true, 

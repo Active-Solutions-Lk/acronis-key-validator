@@ -17,6 +17,7 @@ export async function POST(request) {
       reseller: _reseller,
       // hoDate,
       pkg,
+      pkg_id,  // Add this line to extract pkg_id from request body
       actDate,
       endDate,
       customer,
@@ -32,26 +33,27 @@ export async function POST(request) {
       user_id
     } = await request.json()
 
-    // console.log('received data', {
-    //   id,
-    //   date,
-    //   reseller,
-    //   hoDate,
-    //   pkg,
-    //   actDate,
-    //   endDate,
-    //   customer,
-    //   address,
-    //   name,
-    //   email,
-    //   tel,
-    //   city,
-    //   code,
-    //   accMail,
-    //   password,
-    //   reseller_id,
-    //   user_id
-    // })
+    console.log('received data', {
+        id,
+      // date,
+      reseller: _reseller,
+      // hoDate,
+      pkg,
+      pkg_id,  // Add this to the log
+      actDate,
+      endDate,
+      customer,
+      address,
+      name,
+      email,
+      tel,
+      city,
+      code,
+      accMail,
+      password,
+      reseller_id,
+      user_id
+    })
 
     // Validate required fields
     if (!id) {
@@ -133,6 +135,11 @@ export async function POST(request) {
         }
       }
 
+      // Handle direct pkg_id if provided (numeric ID)
+      if (pkg_id) {
+        pkgId = Number(pkg_id)
+      }
+
       await prisma.credentials.update({
         where: { id: Number(id) },
         data: {
@@ -140,6 +147,7 @@ export async function POST(request) {
           ...(accMail && { email: accMail }),
           ...(password && { password }),
           ...(pkgId && { pkg_id: pkgId }),
+
           ...(normalizedActDate && { actDate: normalizedActDate }),
           ...(normalizedEndDate && { endDate: normalizedEndDate }),
           updated_at: new Date()

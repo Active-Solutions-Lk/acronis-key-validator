@@ -5,7 +5,7 @@ import DeleteCredential, { BulkDeleteCredentials } from '../../../app/actions/de
 import { toast } from "sonner"
 import { usePermissions } from '@/hooks/usePermissions'
 
-export function useCredentialsActions(data, setData, setRowSelection) {
+export function useCredentialsActions(data, setData, setRowSelection, refreshData) {
   // Get permissions
   const { canEdit, canDelete } = usePermissions()
   
@@ -31,14 +31,19 @@ export function useCredentialsActions(data, setData, setRowSelection) {
       const result = await UpdateCredential(rowId, updateData)
       
       if (result.success) {
-        const updatedData = data.map(item => 
-          item.id === rowId 
-            ? { ...item, [field]: value, updated_at: new Date().toISOString() }
-            : item
-        )
-        setData(updatedData)
+        // Refresh data to ensure consistency with server state
+        if (refreshData) {
+          await refreshData()
+        } else {
+          // Fallback to local update if refreshData is not provided
+          const updatedData = data.map(item => 
+            item.id === rowId 
+              ? { ...item, [field]: value, updated_at: new Date().toISOString() }
+              : item
+          )
+          setData(updatedData)
+        }
         toast.success('Field updated successfully')
-    //    console.log("Inline editing:", { rowId, field, value })
       } else {
         toast.error(result.error || 'Failed to update field')
       }
@@ -46,7 +51,7 @@ export function useCredentialsActions(data, setData, setRowSelection) {
       console.error('Error updating field:', error)
       toast.error('An unexpected error occurred')
     }
-  }, [data, setData, canEdit])
+  }, [data, setData, canEdit, refreshData])
 
   const handleDeleteCredential = React.useCallback(async (id) => {
     // Check if user has permission to delete
@@ -59,9 +64,14 @@ export function useCredentialsActions(data, setData, setRowSelection) {
       const result = await DeleteCredential(id)
       
       if (result.success) {
-        setData(prev => prev.filter(item => item.id !== id))
+        // Refresh data to ensure consistency with server state
+        if (refreshData) {
+          await refreshData()
+        } else {
+          // Fallback to local update if refreshData is not provided
+          setData(prev => prev.filter(item => item.id !== id))
+        }
         toast.success(result.message || 'Credential deleted successfully')
-      //  console.log("Deleting credential with ID:", id)
       } else {
         toast.error(result.error || 'Failed to delete credential')
       }
@@ -69,7 +79,7 @@ export function useCredentialsActions(data, setData, setRowSelection) {
       console.error('Error deleting credential:', error)
       toast.error('An unexpected error occurred')
     }
-  }, [setData, canDelete])
+  }, [setData, canDelete, refreshData])
 
   const handleBulkDelete = React.useCallback(async (rowSelection) => {
     // Check if user has permission to delete
@@ -89,10 +99,15 @@ export function useCredentialsActions(data, setData, setRowSelection) {
       const result = await BulkDeleteCredentials(selectedIds)
       
       if (result.success) {
-        setData(prev => prev.filter(item => !selectedIds.includes(item.id)))
-        setRowSelection({})
+        // Refresh data to ensure consistency with server state
+        if (refreshData) {
+          await refreshData()
+        } else {
+          // Fallback to local update if refreshData is not provided
+          setData(prev => prev.filter(item => !selectedIds.includes(item.id)))
+          setRowSelection({})
+        }
         toast.success(result.message || `Successfully deleted ${result.deletedCount} credential(s)`)
-      //  console.log("Bulk deleting credentials with IDs:", selectedIds)
       } else {
         toast.error(result.error || 'Failed to delete credentials')
       }
@@ -100,7 +115,7 @@ export function useCredentialsActions(data, setData, setRowSelection) {
       console.error('Error bulk deleting credentials:', error)
       toast.error('An unexpected error occurred')
     }
-  }, [data, setData, setRowSelection, canDelete])
+  }, [data, setData, setRowSelection, canDelete, refreshData])
 
   return {
     togglePasswordVisibility,

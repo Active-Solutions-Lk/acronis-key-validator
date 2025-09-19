@@ -126,16 +126,10 @@ export default function Welcome () {
     setSuccess('')
     setIsSubmitting(true)
 
-    // Calculate dates
-    const actDate = new Date()
-    const endDate = new Date()
-    endDate.setFullYear(actDate.getFullYear() + 1)
-
-    // Create data with dates
+    // Remove the date calculation from frontend and let the API handle it
     const submitData = {
-      ...formData,
-      actDate,
-      endDate
+      ...formData
+      // actDate and endDate will be calculated in the API
     }
 
     try {

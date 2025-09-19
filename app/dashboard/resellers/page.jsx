@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import { Card, CardContent } from '@/components/ui/card'
 import { toast } from 'sonner'
 import { flexRender, getCoreRowModel, useReactTable, getSortedRowModel, getFilteredRowModel, getPaginationRowModel } from '@tanstack/react-table'
@@ -26,6 +26,26 @@ const TableHead = ({ children, className = '', ...props }) => <th className={`h-
 const TableCell = ({ children, className = '', ...props }) => <td className={`p-2 align-middle ${className}`} {...props}>{children}</td>
 const Input = ({ className = '', ...props }) => <input className={`flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ${className}`} {...props} />
 
+const LoadingTexts = () => {
+  const [currentText, setCurrentText] = useState(0)
+  const loadingTexts = [
+    'Processing...',
+    'Resellers are working...',
+    'Loading...',
+    'Here we go...'
+  ]
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setCurrentText(prev => (prev + 1) % loadingTexts.length)
+    }, 1000)
+
+    return () => clearInterval(interval)
+  }, [])
+
+  return <div>{loadingTexts[currentText]}</div>
+}
+
 export default function ResellersPage() {
   const [message, setMessage] = useState('')
   const [data, setData] = useState([])
@@ -48,6 +68,9 @@ export default function ResellersPage() {
     vat: '',
     city: ''
   })
+  
+  // Ref to store the hash value
+  const hashRef = useRef('')
 
   // Delete handlers
   const handleDeleteReseller = useCallback(async (id) => {
@@ -157,6 +180,9 @@ export default function ResellersPage() {
           AllResellers(),
           AllCities()
         ])
+
+        console.log('City Response:', citiesResponse);
+        console.log('Reseller Response:', resellerResponse);
         
         if (resellerResponse.success) {
           setData(resellerResponse.resellers)
@@ -188,6 +214,57 @@ export default function ResellersPage() {
     }
     fetchData()
   }, [])
+
+  // Handle hash changes to select a specific reseller
+  useEffect(() => {
+    const handleHashChange = () => {
+      const hash = window.location.hash.substring(1) // Remove the # symbol
+      if (hash && !isNaN(hash)) {
+        const resellerId = parseInt(hash)
+        
+        // Set the reseller ID as the global filter to show only this record
+        setGlobalFilter(resellerId.toString())
+        
+        // We need to wait for the table to re-render with the filtered data
+        // before we can select the row
+        setTimeout(() => {
+          // Get the filtered rows after the filter has been applied
+          const filteredRows = table.getFilteredRowModel().rows
+          
+          // Find the row with the matching customer_id
+          const targetRow = filteredRows.find(row => row.original.customer_id === resellerId)
+          
+          if (targetRow) {
+            // Select the row using the table's API
+            targetRow.toggleSelected(true)
+            
+            // Scroll to the selected row
+            setTimeout(() => {
+              const rowElement = document.querySelector(`[data-row-index="${targetRow.index}"]`)
+              if (rowElement) {
+                rowElement.scrollIntoView({ behavior: 'smooth', block: 'center' })
+                // Add a temporary highlight effect
+                rowElement.classList.add('bg-yellow-100')
+                setTimeout(() => {
+                  rowElement.classList.remove('bg-yellow-100')
+                }, 2000)
+              }
+            }, 100)
+          }
+        }, 0)
+      }
+    }
+
+    // Check hash on initial load
+    handleHashChange()
+    
+    // Listen for hash changes
+    window.addEventListener('hashchange', handleHashChange)
+    
+    return () => {
+      window.removeEventListener('hashchange', handleHashChange)
+    }
+  }, [data, table])
 
   const handleRowDoubleClick = (row) => { setEditingRow({ ...row }); setIsEditDialogOpen(true) }
   
@@ -266,13 +343,13 @@ export default function ResellersPage() {
   if (initialLoading) {
     return (
       <div className='flex-1 p-3 w-full'>
-        <Card className='bg-gray-100'>
+        <Card className='bg-transparent'>
           <CardContent className='p-4'>
-            <div className="space-y-4">
-              <Skeleton className="h-10 w-full max-w-sm" />
-              <div className="space-y-2">
-                {Array.from({ length: 5 }).map((_, i) => <Skeleton key={i} className="h-12 w-full" />)}
+            <div className="flex flex-col items-center justify-center h-64">
+              <div className="text-2xl font-semibold text-gray-700 mb-4 animate-pulse">
+                <LoadingTexts />
               </div>
+              <div className="w-12 h-12 border-4 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
             </div>
           </CardContent>
         </Card>
@@ -282,8 +359,8 @@ export default function ResellersPage() {
 
   return (
     <div className='flex-1 p-3 w-full gap-6'>
-      <Card className='bg-gray-100'>
-        <CardContent className='p-4'>
+      <Card className='bg-transparent'>
+        <CardContent className='p-1'>
           <div className="w-full">
             <div className="flex items-center justify-between mb-4">
               <div className="relative flex-1 max-w-sm">
@@ -325,8 +402,13 @@ export default function ResellersPage() {
                 </TableHeader>
                 <TableBody>
                   {table.getRowModel().rows?.length ? (
-                    table.getRowModel().rows.map((row) => (
-                      <TableRow key={row.id} className="cursor-pointer hover:bg-white" onDoubleClick={() => handleRowDoubleClick(row.original)}>
+                    table.getRowModel().rows.map((row, index) => (
+                      <TableRow 
+                        key={row.id} 
+                        className="cursor-pointer hover:bg-white" 
+                        onDoubleClick={() => handleRowDoubleClick(row.original)}
+                        data-row-index={index}
+                      >
                         {row.getVisibleCells().map((cell) => (
                           <TableCell key={cell.id}>{flexRender(cell.column.columnDef.cell, cell.getContext())}</TableCell>
                         ))}

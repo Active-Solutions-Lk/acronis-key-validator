@@ -71,7 +71,7 @@ export function useCredentialsColumns({
           onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
           className="h-8 px-2"
         >
-          ID
+          Serial
           <ArrowUpDown className="ml-2 h-4 w-4" />
         </Button>
       ),
@@ -219,7 +219,7 @@ export function useCredentialsColumns({
         <Button
           variant="ghost"
           onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-          className="h-8 px-0"
+          className="h-8 px-2"
         >
           Quota
           <ArrowUpDown className="ml-2 h-4 w-4" />
@@ -231,12 +231,12 @@ export function useCredentialsColumns({
         
         if (isEditing) {
           return (
-            <div className="flex items-center space-x-2 p-0 ">
+            <div className="flex items-center space-x-2">
               <Input
                 type="number"
                 value={tempValue}
                 onChange={(e) => setTempValue(e.target.value)}
-                className="h-8 w-15"
+                className="h-8 w-20"
               />
               <Button
                 size="sm"
@@ -282,7 +282,7 @@ export function useCredentialsColumns({
               <Input
                 value={tempValue}
                 onChange={(e) => setTempValue(e.target.value)}
-                className="h-8"
+                className="h-8 px-2"
               />
               <Button
                 size="sm"
@@ -319,31 +319,31 @@ export function useCredentialsColumns({
         )
       },
     },
-    // {
-    //   accessorKey: "created_at",
-    //   header: ({ column }) => (
-    //     <Button
-    //       variant="ghost"
-    //       onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-    //       className="h-8 px-2"
-    //     >
-    //       Created
-    //       <ArrowUpDown className="ml-2 h-4 w-4" />
-    //     </Button>
-    //   ),
-    //   cell: ({ row }) => {
-    //     const dateValue = row.getValue("created_at")
-    //     if (!dateValue) {
-    //       return <div className="text-sm text-gray-600">—</div>
-    //     }
-    //     const date = new Date(dateValue)
-    //     return (
-    //       <div className="text-sm text-gray-600">
-    //         {date.toLocaleDateString()}
-    //       </div>
-    //     )
-    //   },
-    // },
+    {
+      accessorKey: "created_at",
+      header: ({ column }) => (
+        <Button
+          variant="ghost"
+          onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+          className="h-8 px-2"
+        >
+          Created
+          <ArrowUpDown className="ml-2 h-4 w-4" />
+        </Button>
+      ),
+      cell: ({ row }) => {
+        const dateValue = row.getValue("created_at")
+        if (!dateValue) {
+          return <div className="text-sm text-gray-600">—</div>
+        }
+        const date = new Date(dateValue)
+        return (
+          <div className="text-sm text-gray-600">
+            {date.toLocaleDateString()}
+          </div>
+        )
+      },
+    },
     {
       accessorKey: "user_id",
       header: "User",
@@ -358,7 +358,7 @@ export function useCredentialsColumns({
         return (
           <a 
             href={`/dashboard/users#${user.id}`} 
-            className="text-blue-600 hover:underline truncate max-w-xs block"
+            className="text-gray-900 hover:underline truncate max-w-xs block"
             title={userDisplay}
           >
             {userDisplay}
@@ -380,7 +380,7 @@ export function useCredentialsColumns({
         return (
           <a 
             href={`/dashboard/resellers#${reseller.customer_id}`} 
-            className="text-blue-600 hover:underline truncate max-w-xs block"
+            className="text-gray-900 hover:underline truncate max-w-xs block"
             title={resellerDisplay}
           >
             {resellerDisplay}
@@ -433,7 +433,7 @@ export function useCredentialsColumns({
                   }}
                 >
                   <Edit className="mr-2 h-4 w-4" />
-                  Edit
+                  Edits
                 </DropdownMenuItem>
               )}
               {canDeleteCredentials && (

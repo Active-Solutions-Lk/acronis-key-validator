@@ -8,11 +8,13 @@ export async function userRegister(formData) {
     // Ensure city is a string before calling parseInt
     const city = formData.city ? parseInt(formData.city, 10) : null;
     
-    // Prepare the data with proper types
+    // Prepare the data with proper types and remove date fields
+    // The API will handle date calculation based on package duration
     const submitData = {
       ...formData,
       tel: isNaN(tel) ? 0 : tel, // tel is required in the schema, default to 0 if invalid
       city: isNaN(city) ? null : city,
+      // Remove actDate and endDate as they will be calculated in the API
     };
 
     const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/user-register`, {

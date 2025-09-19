@@ -1,15 +1,26 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { RefreshCw, Clock, CheckCircle, AlertCircle } from 'lucide-react'
+import { RefreshCw, Clock, CheckCircle, AlertCircle, Calendar } from 'lucide-react'
 
 import { syncData } from '../../actions/syncData'
 
-function SyncEmails () {
+// Type definition for syncData function to properly handle string parameters
+interface SyncDataFunction {
+  (fromDate?: string | null, toDate?: string | null): ReturnType<typeof syncData>;
+}
+
+// Cast syncData to the proper type
+const typedSyncData = syncData as unknown as SyncDataFunction;
+
+function SyncPage() {
   const [isLoading, setIsLoading] = useState(false)
-  const [lastSync, setLastSync] = useState(null)
+  const [lastSync, setLastSync] = useState<Date | null>(null)
   const [syncStatus, setSyncStatus] = useState('idle') // idle, success, error
   const [syncMessage, setSyncMessage] = useState('')
+  const [fromDate, setFromDate] = useState('')
+  const [toDate, setToDate] = useState('')
+  
   // Calculate next scheduled sync time
   const getNextSyncTime = () => {
     const now = new Date()
@@ -20,7 +31,7 @@ function SyncEmails () {
   }
 
   // Format time for display
-  const formatTime = date => {
+  const formatTime = (date: Date) => {
     return date.toLocaleString('en-US', {
       month: 'short',
       day: 'numeric',
@@ -31,54 +42,41 @@ function SyncEmails () {
   }
 
   // Sync function
-  const performSync = async () => {
+  const performSync = async (from?: string | null, to?: string | null) => {
     setIsLoading(true)
     setSyncStatus('idle')
     try {
-      const response = await syncData()
-    //  console.log('response', response)
+      // Use the properly typed function
+      const response = await typedSyncData(from, to)
       if (response.success) {
-      //  console.log(response.data) // Fixed: Use response.data instead of response.responseData.data
         setSyncStatus('success')
-        setSyncMessage(response.message || 'Emails synced successfully') // Use actual message from response
+        setSyncMessage(response.message || 'Sales synced successfully')
         setLastSync(new Date())
       } else {
         setSyncStatus('error')
         setSyncMessage(
-          response.error || response.details || 'Failed to sync emails'
+          response.error || response.details || 'Failed to sync sales'
         )
       }
-    } catch (error) {
+    } catch (_error) {
       setSyncStatus('error')
-      setSyncMessage('Error syncing emails')
-     console.log('Error fetching master data:', error)
+      setSyncMessage('Error syncing sales')
+      console.log('Error syncing sales:', _error)
     } finally {
       setIsLoading(false)
     }
   }
+  
   // Manual sync button handler
   const handleManualSync = () => {
-    performSync()
-    // startCronJob()
+    // If dates are provided, use them; otherwise sync for today
+    if (fromDate && toDate) {
+      performSync(fromDate, toDate)
+    } else {
+      // Sync for today if no dates selected
+      performSync()
+    }
   }
-
-
-  // Trigger server-side cron job (for testing)
-  // const startCronJob = async () => {
-  //   try {
-  //     const response = await fetch('/api/run-sync', {
-  //       method: 'POST',
-  //       headers: { 'Content-Type': 'application/json' },
-  //     });
-  //     const result = await response.json();
-  //     setSyncMessage(result.message);
-  //     setSyncStatus(response.ok ? 'success' : 'error');
-  //   } catch (error) {
-  //     setSyncStatus('error');
-  //     setSyncMessage('Failed to start cron job');
-  //     console.error('Error starting cron job:', error);
-  //   }
-  // };
 
   // Set up daily sync at 12:00 AM
   useEffect(() => {
@@ -86,7 +84,7 @@ function SyncEmails () {
       const nextSync = getNextSyncTime()
       const timeUntilSync = nextSync.getTime() - Date.now()
       const timeout = setTimeout(() => {
-        performSync()
+        performSync() // Daily sync for today
         // Schedule the next sync
         scheduleNextSync()
       }, timeUntilSync)
@@ -104,7 +102,7 @@ function SyncEmails () {
         {/* Header */}
         <div className='text-center mb-6'>
           <p className='text-gray-400 text-lg'>
-            Automated email synchronization system
+            Automated sales synchronization system
           </p>
         </div>
 
@@ -156,23 +154,61 @@ function SyncEmails () {
               )}
             </div>
           </div>
+          
           {/* Manual Sync Section */}
-          <div className='bg-gray-900 border border-gray-800 rounded-lg p-2 text-center'>
-            <h3 className='text-2xl font-semibold mb-4'>Manual Sync</h3>
-            <p className='text-gray-400 mb-6'>
-              Trigger an immediate email synchronization
+          <div className='bg-gray-900 border border-gray-800 rounded-lg p-6'>
+            <h3 className='text-xl font-semibold mb-4 flex items-center gap-2'>
+              <Calendar className='w-5 h-5' />
+              Manual Sync
+            </h3>
+            <p className='text-gray-400 mb-4'>
+              Select date range and trigger sales synchronization
             </p>
+
+            {/* Date Range Selection */}
+            <div className='space-y-4 mb-6'>
+              <div>
+                <label className='block text-sm font-medium text-gray-300 mb-1'>
+                  From Date
+                </label>
+                <input
+                  type='date'
+                  value={fromDate}
+                  onChange={(e) => setFromDate(e.target.value)}
+                  className='w-full bg-gray-800 border border-gray-700 rounded-md px-3 py-2 text-white'
+                />
+              </div>
+              <div>
+                <label className='block text-sm font-medium text-gray-300 mb-1'>
+                  To Date
+                </label>
+                <input
+                  type='date'
+                  value={toDate}
+                  onChange={(e) => setToDate(e.target.value)}
+                  className='w-full bg-gray-800 border border-gray-700 rounded-md px-3 py-2 text-white'
+                />
+              </div>
+            </div>
 
             <button
               onClick={handleManualSync}
               disabled={isLoading}
-              className='bg-white text-black px-8 py-3 rounded-lg font-semibold hover:bg-gray-200 disabled:bg-gray-600 disabled:text-gray-400 transition-all duration-200 flex items-center gap-3 mx-auto'
+              className='w-full bg-white text-black px-4 py-3 rounded-lg font-semibold hover:bg-gray-200 disabled:bg-gray-600 disabled:text-gray-400 transition-all duration-200 flex items-center justify-center gap-3'
             >
               <RefreshCw
                 className={`w-5 h-5 ${isLoading ? 'animate-spin' : ''}`}
               />
-              {isLoading ? 'Syncing...' : 'Sync Now'}
+              {isLoading ? 'Syncing...' : 'Sync Sales Data'}
             </button>
+            
+            {(fromDate || toDate) && (
+              <p className='text-xs text-gray-500 mt-2 text-center'>
+                {fromDate && toDate 
+                  ? `Syncing data from ${fromDate} to ${toDate}` 
+                  : 'Please select both from and to dates'}
+              </p>
+            )}
           </div>
         </div>
       </div>
@@ -180,4 +216,4 @@ function SyncEmails () {
   )
 }
 
-export default SyncEmails
+export default SyncPage

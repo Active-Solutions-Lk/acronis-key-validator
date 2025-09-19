@@ -2,9 +2,9 @@
 
 import { useEffect, useState } from 'react';
 import { ChartAreaInteractive } from "@/components/chart-area-interactive"
-import { DataTable } from "@/components/data-table"
+// import { DataTable } from "@/components/data-table"
 import { SectionCards } from "@/components/section-cards"
-import data from "./data.json"
+// import data from "./data.json"
 import fetchDashboardStats from '@/app/actions/fetchDashboardStats';
 
 // Define the type for dashboard stats
@@ -48,7 +48,7 @@ export default function Page() {
       <div className="px-4 lg:px-6">
         <ChartAreaInteractive />
       </div>
-      <DataTable data={data} />
+      {/* <DataTable data={data} /> */}
     </div>
   )
 }

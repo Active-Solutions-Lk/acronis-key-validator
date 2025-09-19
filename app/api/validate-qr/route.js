@@ -19,7 +19,8 @@ export async function POST(request) {
       where: { code: code },
       include: {
         pkg: true, // Include package information
-        user: true // Include user information directly (replaces master)
+        user: true, // Include user information directly (replaces master)
+        sales: true // Include sales information to check for reseller association
       }
     });
 
@@ -27,6 +28,14 @@ export async function POST(request) {
       return new Response(
         JSON.stringify({ message: 'Invalid code' }),
         { status: 404 }
+      );
+    }
+
+    // Check if the credential has an associated reseller through sales
+    if (!credential.sales || credential.sales.length === 0) {
+      return new Response(
+        JSON.stringify({ message: 'This code is not associated with any reseller' }),
+        { status: 400 }
       );
     }
 

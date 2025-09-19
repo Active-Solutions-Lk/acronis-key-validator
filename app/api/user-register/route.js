@@ -1,8 +1,57 @@
 import prisma from '@/lib/prisma';
 
+// Function to parse duration string and calculate end date
+function calculateEndDate(startDate, duration) {
+  // Create a new date object to avoid modifying the original
+  const endDate = new Date(startDate);
+  
+  // If duration is not provided, default to 1 year
+  if (!duration) {
+    endDate.setFullYear(endDate.getFullYear() + 1);
+    return endDate;
+  }
+  
+  // Handle numeric values directly (e.g., 1, 2, 0.5)
+  if (!isNaN(parseFloat(duration))) {
+    const years = parseFloat(duration);
+    // For fractional years, convert to months for more accurate calculation
+    if (years % 1 !== 0) {
+      // Convert fractional years to months
+      const months = Math.round(years * 12);
+      endDate.setMonth(endDate.getMonth() + months);
+    } else {
+      // Whole years
+      endDate.setFullYear(endDate.getFullYear() + years);
+    }
+    return endDate;
+  }
+  
+  // Parse duration string (e.g., "1 year", "6 months", "30 days")
+  const durationLower = duration.toLowerCase().trim();
+  
+  // Handle different duration formats
+  if (durationLower.includes('year') || durationLower.includes('years')) {
+    const years = parseFloat(durationLower) || 1;
+    endDate.setFullYear(endDate.getFullYear() + years);
+  } else if (durationLower.includes('month') || durationLower.includes('months')) {
+    const months = parseFloat(durationLower) || 1;
+    endDate.setMonth(endDate.getMonth() + months);
+  } else if (durationLower.includes('day') || durationLower.includes('days')) {
+    const days = parseFloat(durationLower) || 30;
+    endDate.setDate(endDate.getDate() + days);
+  } else {
+    // Default to 1 year if format is not recognized
+    endDate.setFullYear(endDate.getFullYear() + 1);
+  }
+  
+  return endDate;
+}
+
 export async function POST(request) {
   try {
-    const { customer, address, name, email, tel, city, code, actDate, endDate } = await request.json();
+    // Note: We're not using actDate and endDate from the request anymore
+    // They will be calculated based on package duration
+    const { customer, address, name, email, tel, city, code } = await request.json();
 
     if (!name || !email) {
       return new Response(
@@ -19,8 +68,12 @@ export async function POST(request) {
     }
 
     // First, find the credential record with the given code
+    // Include the package information to get duration
     const credential = await prisma.credentials.findFirst({
       where: { code: code },
+      include: {
+        pkg: true // Include package information
+      }
     });
 
     if (!credential) {
@@ -30,6 +83,9 @@ export async function POST(request) {
       );
     }
 
+    // Get the package information
+    const pkg = credential.pkg;
+    
     // Create or update the user record
     // First try to find existing user by email
     let user = await prisma.user.findFirst({
@@ -83,13 +139,19 @@ export async function POST(request) {
       });
     }
 
-    // Update the credential record to link it to the user
+    // Calculate activation date (current date)
+    const actDate = new Date();
+    
+    // Calculate end date based on package duration
+    const endDate = calculateEndDate(actDate, pkg?.duration);
+
+    // Update the credential record to link it to the user and set dates
     const updatedCredential = await prisma.credentials.update({
       where: { id: credential.id },
       data: {
         user_id: user.id,
-        actDate: actDate ? new Date(actDate) : null,
-        endDate: endDate ? new Date(endDate) : null,
+        actDate: actDate,
+        endDate: endDate,
         updated_at: new Date(),
       },
     });

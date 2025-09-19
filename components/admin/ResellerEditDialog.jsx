@@ -8,6 +8,8 @@ import { Textarea } from '@/components/ui/textarea'
 import { Combobox } from '@/components/ui/combobox'
 
 function ResellerEditDialog({ isEditDialogOpen, setIsEditDialogOpen, editingRow, handleInputChange, handleUpdateData, masterLoading, cities = [] }) {
+
+  console.log('cities', cities);
   const handleFieldChange = useCallback((field) => (e) => {
     const value = e.target.value
     handleInputChange(field, value)
@@ -58,7 +60,7 @@ function ResellerEditDialog({ isEditDialogOpen, setIsEditDialogOpen, editingRow,
               placeholder="Select city..."
               searchPlaceholder="Search cities..."
               className="w-full"
-              disabled={!cities || cities.length === 0}
+              // disabled={!cities || cities.length === 0}
             />
           </div>
           <div className="grid grid-cols-3 gap-4">
